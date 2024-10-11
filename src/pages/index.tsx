@@ -44,7 +44,7 @@ export default function Home() {
         </motion.p>
         <motion.div className="space-x-4">
           {isSignedIn ? (
-            <Link href="/app">
+            <Link href="/createsystem">
               <motion.button
                 className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
                 whileHover={{ scale: 1.1 }}

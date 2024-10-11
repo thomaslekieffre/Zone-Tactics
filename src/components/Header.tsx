@@ -36,7 +36,7 @@ export default function Header(): JSX.Element {
           {isSignedIn ? (
             <div className="hidden md:flex items-center space-x-4">
               <Link
-                href="/app"
+                href="/"
                 className="px-6 py-2 text-black capitalize bg-white rounded-full hover:bg-gray-100"
               >
                 {user.username}
