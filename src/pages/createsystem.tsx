@@ -1,5 +1,12 @@
 import React, { useState } from "react";
-import { ArrowLeft, ArrowRight, RotateCw, Play, Pause } from "react-feather";
+import {
+  ArrowLeft,
+  ArrowRight,
+  RotateCw,
+  Play,
+  Pause,
+  MousePointer,
+} from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
 import { useDrag, useDrop } from "react-dnd";
@@ -69,12 +76,68 @@ const PlayerButton = ({
   );
 };
 
+const Arrow = ({
+  start,
+  end,
+  playerRadius = 24, // Utiliser un rayon pour ajuster les flèches
+}: {
+  start: { x: number; y: number };
+  end: { x: number; y: number };
+  playerRadius?: number;
+}) => {
+  const angle = Math.atan2(end.y - start.y, end.x - start.x);
+  const length = Math.sqrt(
+    Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+  );
+
+  const offsetX = Math.cos(angle) * playerRadius;
+  const offsetY = Math.sin(angle) * playerRadius;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: start.y + offsetY,
+        left: start.x + offsetX,
+        width: length - playerRadius,
+        height: 0,
+        transform: `rotate(${angle}rad)`,
+        transformOrigin: "0 0",
+      }}
+    >
+      <div
+        style={{
+          width: "100%",
+          height: "2px",
+          backgroundColor: "yellow",
+        }}
+      />
+      <div
+        style={{
+          position: "absolute",
+          right: 0,
+          top: "-4px",
+          width: 0,
+          height: 0,
+          borderTop: "5px solid transparent",
+          borderBottom: "5px solid transparent",
+          borderLeft: "10px solid yellow",
+        }}
+      />
+    </div>
+  );
+};
+
 const Court = ({
   players,
   setPlayers,
   onPlayerClick,
   ballPosition,
   selectingPlayerForBall,
+  selectingPlayerForArrow,
+  onCourtClick,
+  arrowStart,
+  arrows, // Ajoutez cette prop
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -104,11 +167,18 @@ const Court = ({
     <div
       ref={drop as unknown as React.LegacyRef<HTMLDivElement>}
       className="w-full h-full bg-orange-500 rounded-lg relative court-container"
+      onClick={(e) => {
+        const courtRect = e.currentTarget.getBoundingClientRect();
+        const x = e.clientX - courtRect.left;
+        const y = e.clientY - courtRect.top;
+        onCourtClick({ x, y });
+      }}
     >
       <div
         className="absolute inset-0 bg-no-repeat bg-cover bg-center"
         style={{ backgroundImage: "url('/img/basket_court.png')" }}
       >
+        {/* Rendre les joueurs */}
         {players.map((player: any) => (
           <div
             key={player.id}
@@ -124,11 +194,21 @@ const Court = ({
               num={player.num}
               team={player.team}
               isOnCourt
-              isSelectable={selectingPlayerForBall}
-              onClick={() => selectingPlayerForBall && onPlayerClick(player)}
+              isSelectable={selectingPlayerForBall || selectingPlayerForArrow}
+              onClick={() =>
+                (selectingPlayerForBall || selectingPlayerForArrow) &&
+                onPlayerClick(player)
+              }
             />
           </div>
         ))}
+
+        {/* Rendre les flèches après les joueurs */}
+        {arrows.map((arrow: any, index: number) => (
+          <Arrow key={index} start={arrow.start} end={arrow.end} />
+        ))}
+
+        {/* Ballon */}
         {ballPosition && (
           <div
             className="absolute"
@@ -139,6 +219,20 @@ const Court = ({
             }}
           >
             <TfiBasketball size={28} color="orange" />
+          </div>
+        )}
+
+        {/* Point de départ de la flèche */}
+        {arrowStart && (
+          <div
+            className="absolute z-10 animate-pulse"
+            style={{
+              left: `${arrowStart.x}px`,
+              top: `${arrowStart.y}px`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <MousePointer size={24} color="yellow" />
           </div>
         )}
       </div>
@@ -167,6 +261,16 @@ const CreateSystem: React.FC = () => {
     y: number;
   } | null>(null);
 
+  const [selectingPlayerForArrow, setSelectingPlayerForArrow] = useState(false);
+  const [arrowStart, setArrowStart] = useState<{ x: number; y: number } | null>(
+    null
+  );
+  const [arrows, setArrows] = useState<
+    Array<{ start: { x: number; y: number }; end: { x: number; y: number } }>
+  >([]);
+
+  const isCourtEmpty = playersOnCourt.length === 0;
+
   const handlePlayerDrop = (num: number, team: string) => {
     if (team === "team1") {
       setTeam1Players((prevPlayers) => prevPlayers.filter((p) => p !== num));
@@ -189,6 +293,37 @@ const CreateSystem: React.FC = () => {
       const ballY = player.y;
       setBallPosition({ x: ballX, y: ballY });
       setSelectingPlayerForBall(false);
+    }
+  };
+
+  const handleArrowClick = () => {
+    setSelectingPlayerForArrow(true);
+    setSelectingPlayerForBall(false);
+    setArrowStart(null);
+  };
+
+  const handlePlayerClick = (player: any) => {
+    if (selectingPlayerForBall) {
+      handlePlayerClickForBall(player);
+    } else if (selectingPlayerForArrow) {
+      if (!arrowStart) {
+        setArrowStart({ x: player.x, y: player.y });
+      } else {
+        setArrows([
+          ...arrows,
+          { start: arrowStart, end: { x: player.x, y: player.y } },
+        ]);
+        setArrowStart(null);
+        setSelectingPlayerForArrow(false);
+      }
+    }
+  };
+
+  const handleCourtClick = (position: { x: number; y: number }) => {
+    if (selectingPlayerForArrow && arrowStart) {
+      setArrows([...arrows, { start: arrowStart, end: position }]);
+      setArrowStart(null);
+      setSelectingPlayerForArrow(false);
     }
   };
 
@@ -224,21 +359,33 @@ const CreateSystem: React.FC = () => {
             <div>
               <h3 className="text-xl font-semibold mb-4">Actions :</h3>
               <div className="space-y-2">
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                <button
+                  className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
+                    selectingPlayerForArrow ? "bg-yellow-500" : ""
+                  } ${
+                    isCourtEmpty
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-blue-500"
+                  }`}
+                  onClick={handleArrowClick}
+                  disabled={isCourtEmpty}
+                >
                   <ArrowRight size={28} />
                 </button>
                 <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
                   <CgBorderStyleDotted size={28} />
                 </button>
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                  <RotateCw size={28} />
-                </button>
                 {!ballPosition && (
                   <button
-                    className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors ${
+                    className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
                       selectingPlayerForBall ? "bg-yellow-500" : ""
+                    } ${
+                      isCourtEmpty
+                        ? "opacity-50 cursor-not-allowed"
+                        : "hover:bg-blue-500"
                     }`}
                     onClick={handleBasketballClick}
+                    disabled={isCourtEmpty}
                   >
                     <TfiBasketball size={28} />
                   </button>
@@ -277,15 +424,33 @@ const CreateSystem: React.FC = () => {
                 ))}
               </div>
             </div>
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Animation :</h3>
+              <div className="space-y-2">
+                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                  <Play size={28} />
+                </button>
+                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                  <Pause size={28} />
+                </button>
+                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                  <RotateCw size={28} />
+                </button>
+              </div>
+            </div>
           </div>
 
           <div className="flex-1 bg-gray-100 p-2 h-full">
             <Court
               players={playersOnCourt}
               setPlayers={setPlayersOnCourt}
-              onPlayerClick={handlePlayerClickForBall}
+              onPlayerClick={handlePlayerClick}
               ballPosition={ballPosition}
               selectingPlayerForBall={selectingPlayerForBall}
+              selectingPlayerForArrow={selectingPlayerForArrow}
+              onCourtClick={handleCourtClick}
+              arrowStart={arrowStart}
+              arrows={arrows}
             />
           </div>
         </main>
