@@ -79,11 +79,13 @@ const PlayerButton = ({
 const Arrow = ({
   start,
   end,
-  playerRadius = 24, // Utiliser un rayon pour ajuster les flèches
+  playerRadius = 24,
+  isDotted = false,
 }: {
   start: { x: number; y: number };
   end: { x: number; y: number };
   playerRadius?: number;
+  isDotted?: boolean;
 }) => {
   const angle = Math.atan2(end.y - start.y, end.x - start.x);
   const length = Math.sqrt(
@@ -109,13 +111,13 @@ const Arrow = ({
         style={{
           width: "100%",
           height: "2px",
-          backgroundColor: "yellow",
+          borderTop: isDotted ? "2px dotted yellow" : "2px solid yellow",
         }}
       />
       <div
         style={{
           position: "absolute",
-          right: 0,
+          right: "-5px",
           top: "-4px",
           width: 0,
           height: 0,
@@ -137,7 +139,9 @@ const Court = ({
   selectingPlayerForArrow,
   onCourtClick,
   arrowStart,
-  arrows, // Ajoutez cette prop
+  arrows,
+  selectingDottedArrow,
+  dottedArrows,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -208,6 +212,16 @@ const Court = ({
           <Arrow key={index} start={arrow.start} end={arrow.end} />
         ))}
 
+        {/* Rendre les flèches en pointillés */}
+        {dottedArrows.map((arrow: any, index: number) => (
+          <Arrow
+            key={`dotted-${index}`}
+            start={arrow.start}
+            end={arrow.end}
+            isDotted={true}
+          />
+        ))}
+
         {/* Ballon */}
         {ballPosition && (
           <div
@@ -269,6 +283,11 @@ const CreateSystem: React.FC = () => {
     Array<{ start: { x: number; y: number }; end: { x: number; y: number } }>
   >([]);
 
+  const [selectingDottedArrow, setSelectingDottedArrow] = useState(false);
+  const [dottedArrows, setDottedArrows] = useState<
+    Array<{ start: { x: number; y: number }; end: { x: number; y: number } }>
+  >([]);
+
   const isCourtEmpty = playersOnCourt.length === 0;
 
   const handlePlayerDrop = (num: number, team: string) => {
@@ -324,6 +343,20 @@ const CreateSystem: React.FC = () => {
       setArrows([...arrows, { start: arrowStart, end: position }]);
       setArrowStart(null);
       setSelectingPlayerForArrow(false);
+    } else if (selectingDottedArrow && ballPosition) {
+      setDottedArrows([
+        ...dottedArrows,
+        { start: ballPosition, end: position },
+      ]);
+      setSelectingDottedArrow(false);
+    }
+  };
+
+  const handleDottedArrowClick = () => {
+    if (ballPosition) {
+      setSelectingDottedArrow(true);
+      setSelectingPlayerForArrow(false);
+      setSelectingPlayerForBall(false);
     }
   };
 
@@ -372,7 +405,17 @@ const CreateSystem: React.FC = () => {
                 >
                   <ArrowRight size={28} />
                 </button>
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                <button
+                  className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
+                    selectingDottedArrow ? "bg-yellow-500" : ""
+                  } ${
+                    !ballPosition
+                      ? "opacity-50 cursor-not-allowed"
+                      : "hover:bg-blue-500"
+                  }`}
+                  onClick={handleDottedArrowClick}
+                  disabled={!ballPosition}
+                >
                   <CgBorderStyleDotted size={28} />
                 </button>
                 {!ballPosition && (
@@ -451,6 +494,8 @@ const CreateSystem: React.FC = () => {
               onCourtClick={handleCourtClick}
               arrowStart={arrowStart}
               arrows={arrows}
+              selectingDottedArrow={selectingDottedArrow}
+              dottedArrows={dottedArrows}
             />
           </div>
         </main>
