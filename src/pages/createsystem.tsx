@@ -2,21 +2,26 @@ import React, { useState } from "react";
 import { ArrowLeft, ArrowRight, RotateCw, Play, Pause } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
-import { DndProvider, useDrag, useDrop } from "react-dnd";
+import { useDrag, useDrop } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import dynamic from "next/dynamic";
 import { UserButton, useUser } from "@clerk/nextjs";
+import { GrReturn } from "react-icons/gr";
 
 const PlayerButton = ({
   num,
   team,
   onDrop,
   isOnCourt,
+  onClick,
+  isSelectable,
 }: {
   num: number;
   team: string;
   onDrop?: () => void;
   isOnCourt?: boolean;
+  onClick?: () => void;
+  isSelectable?: boolean;
 }) => {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: "player",
@@ -32,21 +37,45 @@ const PlayerButton = ({
   }));
 
   return (
-    <button
-      ref={drag as unknown as React.LegacyRef<HTMLButtonElement>}
-      className={`${
-        team === "team1" ? "bg-blue-500" : "bg-red-500"
-      } text-white rounded-full h-12 w-12 flex items-center justify-center ${
-        isDragging ? "opacity-50" : ""
-      }`}
-      disabled={isOnCourt}
+    <div
+      ref={drag as unknown as React.LegacyRef<HTMLDivElement>}
+      className="relative"
+      style={{ width: "3rem", height: "3rem" }}
+      onClick={onClick}
     >
-      {num}
-    </button>
+      <button
+        className={`${
+          team === "team1" ? "bg-blue-500" : "bg-red-500"
+        } text-white rounded-full h-12 w-12 flex items-center justify-center ${
+          isDragging ? "opacity-50" : ""
+        } ${isSelectable ? "border-4 border-yellow-400" : ""}`}
+        disabled={isOnCourt}
+      >
+        {num}
+      </button>
+
+      {isSelectable && (
+        <div
+          className="absolute top-0 left-0 w-full h-full bg-transparent"
+          style={{
+            width: "6rem",
+            height: "6rem",
+            top: "-1.5rem",
+            left: "-1.5rem",
+          }}
+        />
+      )}
+    </div>
   );
 };
 
-const Court = ({ players, setPlayers }: any) => {
+const Court = ({
+  players,
+  setPlayers,
+  onPlayerClick,
+  ballPosition,
+  selectingPlayerForBall,
+}: any) => {
   const [, drop] = useDrop({
     accept: "player",
     drop: (item: { num: number; team: string }, monitor) => {
@@ -89,10 +118,29 @@ const Court = ({ players, setPlayers }: any) => {
               top: `${player.y}px`,
               transform: "translate(-50%, -50%)",
             }}
+            onClick={() => onPlayerClick(player)}
           >
-            <PlayerButton num={player.num} team={player.team} isOnCourt />
+            <PlayerButton
+              num={player.num}
+              team={player.team}
+              isOnCourt
+              isSelectable={selectingPlayerForBall}
+              onClick={() => selectingPlayerForBall && onPlayerClick(player)}
+            />
           </div>
         ))}
+        {ballPosition && (
+          <div
+            className="absolute"
+            style={{
+              left: `${ballPosition.x}px`,
+              top: `${ballPosition.y}px`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <TfiBasketball size={28} color="orange" />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -113,11 +161,34 @@ const CreateSystem: React.FC = () => {
   const [team1Players, setTeam1Players] = useState([1, 2, 3, 4, 5]);
   const [team2Players, setTeam2Players] = useState([1, 2, 3, 4, 5]);
 
+  const [selectingPlayerForBall, setSelectingPlayerForBall] = useState(false);
+  const [ballPosition, setBallPosition] = useState<{
+    x: number;
+    y: number;
+  } | null>(null);
+
   const handlePlayerDrop = (num: number, team: string) => {
     if (team === "team1") {
       setTeam1Players((prevPlayers) => prevPlayers.filter((p) => p !== num));
     } else {
       setTeam2Players((prevPlayers) => prevPlayers.filter((p) => p !== num));
+    }
+  };
+
+  const handleBasketballClick = () => {
+    if (ballPosition) {
+      setBallPosition(null);
+    } else {
+      setSelectingPlayerForBall(true);
+    }
+  };
+
+  const handlePlayerClickForBall = (player: any) => {
+    if (selectingPlayerForBall) {
+      const ballX = player.x + 22;
+      const ballY = player.y;
+      setBallPosition({ x: ballX, y: ballY });
+      setSelectingPlayerForBall(false);
     }
   };
 
@@ -160,11 +231,18 @@ const CreateSystem: React.FC = () => {
                   <CgBorderStyleDotted size={28} />
                 </button>
                 <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                  <TfiBasketball size={28} />
-                </button>
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
                   <RotateCw size={28} />
                 </button>
+                {!ballPosition && (
+                  <button
+                    className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors ${
+                      selectingPlayerForBall ? "bg-yellow-500" : ""
+                    }`}
+                    onClick={handleBasketballClick}
+                  >
+                    <TfiBasketball size={28} />
+                  </button>
+                )}
               </div>
             </div>
             <div>
@@ -202,7 +280,13 @@ const CreateSystem: React.FC = () => {
           </div>
 
           <div className="flex-1 bg-gray-100 p-2 h-full">
-            <Court players={playersOnCourt} setPlayers={setPlayersOnCourt} />
+            <Court
+              players={playersOnCourt}
+              setPlayers={setPlayersOnCourt}
+              onPlayerClick={handlePlayerClickForBall}
+              ballPosition={ballPosition}
+              selectingPlayerForBall={selectingPlayerForBall}
+            />
           </div>
         </main>
       </div>
