@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -14,6 +14,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import dynamic from "next/dynamic";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
+import { motion } from "framer-motion";
 
 const PlayerButton = ({
   num,
@@ -142,6 +143,8 @@ const Court = ({
   arrows,
   selectingDottedArrow,
   dottedArrows,
+  isAnimating,
+  animatingPlayer,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -182,16 +185,21 @@ const Court = ({
         className="absolute inset-0 bg-no-repeat bg-cover bg-center"
         style={{ backgroundImage: "url('/img/basket_court.png')" }}
       >
-        {/* Rendre les joueurs */}
         {players.map((player: any) => (
-          <div
+          <motion.div
             key={player.id}
             style={{
               position: "absolute",
-              left: `${player.x}px`,
-              top: `${player.y}px`,
+              left: player.x,
+              top: player.y,
               transform: "translate(-50%, -50%)",
             }}
+            animate={
+              isAnimating && animatingPlayer?.id === player.id
+                ? { x: animatingPlayer.targetX, y: animatingPlayer.targetY }
+                : {}
+            }
+            transition={{ duration: 1, ease: "linear" }}
             onClick={() => onPlayerClick(player)}
           >
             <PlayerButton
@@ -204,15 +212,13 @@ const Court = ({
                 onPlayerClick(player)
               }
             />
-          </div>
+          </motion.div>
         ))}
 
-        {/* Rendre les flèches après les joueurs */}
         {arrows.map((arrow: any, index: number) => (
           <Arrow key={index} start={arrow.start} end={arrow.end} />
         ))}
 
-        {/* Rendre les flèches en pointillés */}
         {dottedArrows.map((arrow: any, index: number) => (
           <Arrow
             key={`dotted-${index}`}
@@ -222,7 +228,6 @@ const Court = ({
           />
         ))}
 
-        {/* Ballon */}
         {ballPosition && (
           <div
             className="absolute"
@@ -236,7 +241,6 @@ const Court = ({
           </div>
         )}
 
-        {/* Point de départ de la flèche */}
         {arrowStart && (
           <div
             className="absolute z-10 animate-pulse"
@@ -258,6 +262,44 @@ const DndProviderWithNoSSR = dynamic(
   () => import("react-dnd").then((mod) => mod.DndProvider),
   { ssr: false }
 );
+
+const ActionButton = ({
+  onClick,
+  disabled,
+  icon,
+  title,
+  description,
+  isActive,
+}: {
+  onClick: () => void;
+  disabled?: boolean;
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  isActive?: boolean;
+}) => {
+  return (
+    <div className="relative group">
+      <button
+        className={`p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
+          disabled
+            ? "bg-blue-600 opacity-50 cursor-not-allowed"
+            : isActive
+            ? "bg-yellow-500 hover:bg-yellow-400 border-yellow-300"
+            : "bg-blue-600 hover:bg-blue-500"
+        }`}
+        onClick={onClick}
+        disabled={disabled}
+        title={title}
+      >
+        {icon}
+      </button>
+      <div className="absolute z-10 w-48 p-2 mt-2 text-sm text-white bg-gray-700 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        {description}
+      </div>
+    </div>
+  );
+};
 
 const CreateSystem: React.FC = () => {
   const { user } = useUser();
@@ -288,7 +330,16 @@ const CreateSystem: React.FC = () => {
     Array<{ start: { x: number; y: number }; end: { x: number; y: number } }>
   >([]);
 
-  const isCourtEmpty = playersOnCourt.length === 0;
+  const [actionHistory, setActionHistory] = useState<string[]>([]);
+
+  const [isAnimating, setIsAnimating] = useState(false);
+  const [animatingPlayer, setAnimatingPlayer] = useState<any>(null);
+
+  const addToHistory = (action: string) => {
+    setActionHistory((prev) => [...prev, action]);
+  };
+
+  const isCourtEmpty = actionHistory.length === 0;
 
   const handlePlayerDrop = (num: number, team: string) => {
     if (team === "team1") {
@@ -296,6 +347,7 @@ const CreateSystem: React.FC = () => {
     } else {
       setTeam2Players((prevPlayers) => prevPlayers.filter((p) => p !== num));
     }
+    addToHistory("player");
   };
 
   const handleBasketballClick = () => {
@@ -312,6 +364,7 @@ const CreateSystem: React.FC = () => {
       const ballY = player.y;
       setBallPosition({ x: ballX, y: ballY });
       setSelectingPlayerForBall(false);
+      addToHistory("ball");
     }
   };
 
@@ -334,6 +387,7 @@ const CreateSystem: React.FC = () => {
         ]);
         setArrowStart(null);
         setSelectingPlayerForArrow(false);
+        addToHistory("arrow");
       }
     }
   };
@@ -343,12 +397,14 @@ const CreateSystem: React.FC = () => {
       setArrows([...arrows, { start: arrowStart, end: position }]);
       setArrowStart(null);
       setSelectingPlayerForArrow(false);
+      addToHistory("arrow");
     } else if (selectingDottedArrow && ballPosition) {
       setDottedArrows([
         ...dottedArrows,
         { start: ballPosition, end: position },
       ]);
       setSelectingDottedArrow(false);
+      addToHistory("dottedArrow");
     }
   };
 
@@ -359,6 +415,78 @@ const CreateSystem: React.FC = () => {
       setSelectingPlayerForBall(false);
     }
   };
+
+  const handleUndo = () => {
+    if (isCourtEmpty) return;
+
+    const lastAction = actionHistory[actionHistory.length - 1];
+    setActionHistory((prev) => prev.slice(0, -1));
+
+    switch (lastAction) {
+      case "player":
+        if (playersOnCourt.length > 0) {
+          const lastPlayer = playersOnCourt[playersOnCourt.length - 1];
+          setPlayersOnCourt((prev) => prev.slice(0, -1));
+          if (lastPlayer.team === "team1") {
+            setTeam1Players((prev) => [...prev, lastPlayer.num]);
+          } else {
+            setTeam2Players((prev) => [...prev, lastPlayer.num]);
+          }
+        }
+        break;
+      case "ball":
+        setBallPosition(null);
+        break;
+      case "arrow":
+        setArrows((prev) => prev.slice(0, -1));
+        break;
+      case "dottedArrow":
+        setDottedArrows((prev) => prev.slice(0, -1));
+        break;
+    }
+  };
+
+  const handleValidateMovement = () => {
+    if (arrows.length > 0) {
+      const lastArrow = arrows[arrows.length - 1];
+      const playerToMove = playersOnCourt.find(
+        (player) =>
+          player.x === lastArrow.start.x && player.y === lastArrow.start.y
+      );
+
+      if (playerToMove) {
+        setAnimatingPlayer({
+          ...playerToMove,
+          targetX: lastArrow.end.x - lastArrow.start.x,
+          targetY: lastArrow.end.y - lastArrow.start.y,
+        });
+        setIsAnimating(true);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (isAnimating && animatingPlayer) {
+      const timer = setTimeout(() => {
+        setPlayersOnCourt((players) =>
+          players.map((player) =>
+            player.id === animatingPlayer.id
+              ? {
+                  ...player,
+                  x: player.x + animatingPlayer.targetX,
+                  y: player.y + animatingPlayer.targetY,
+                }
+              : player
+          )
+        );
+        setIsAnimating(false);
+        setAnimatingPlayer(null);
+        setArrows((arrows) => arrows.slice(0, -1)); // Supprime la dernière flèche
+      }, 1000); // Durée de l'animation
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating, animatingPlayer]);
 
   return (
     <DndProviderWithNoSSR backend={HTML5Backend}>
@@ -392,47 +520,46 @@ const CreateSystem: React.FC = () => {
             <div>
               <h3 className="text-xl font-semibold mb-4">Actions :</h3>
               <div className="space-y-2">
-                <button
-                  className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
-                    selectingPlayerForArrow ? "bg-yellow-500" : ""
-                  } ${
-                    isCourtEmpty
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-blue-500"
-                  }`}
+                <ActionButton
                   onClick={handleArrowClick}
                   disabled={isCourtEmpty}
-                >
-                  <ArrowRight size={28} />
-                </button>
-                <button
-                  className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
-                    selectingDottedArrow ? "bg-yellow-500" : ""
-                  } ${
-                    !ballPosition
-                      ? "opacity-50 cursor-not-allowed"
-                      : "hover:bg-blue-500"
-                  }`}
+                  icon={<ArrowRight size={28} />}
+                  title="Ajouter une flèche"
+                  description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
+                  isActive={selectingPlayerForArrow}
+                />
+                <ActionButton
                   onClick={handleDottedArrowClick}
                   disabled={!ballPosition}
-                >
-                  <CgBorderStyleDotted size={28} />
-                </button>
+                  icon={<CgBorderStyleDotted size={28} />}
+                  title="Ajouter une flèche en pointillés"
+                  description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
+                  isActive={selectingDottedArrow}
+                />
                 {!ballPosition && (
-                  <button
-                    className={`bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
-                      selectingPlayerForBall ? "bg-yellow-500" : ""
-                    } ${
-                      isCourtEmpty
-                        ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-blue-500"
-                    }`}
+                  <ActionButton
                     onClick={handleBasketballClick}
                     disabled={isCourtEmpty}
-                  >
-                    <TfiBasketball size={28} />
-                  </button>
+                    icon={<TfiBasketball size={28} />}
+                    title="Placer le ballon"
+                    description="Cliquez pour placer le ballon sur un joueur"
+                    isActive={selectingPlayerForBall}
+                  />
                 )}
+                <ActionButton
+                  onClick={handleUndo}
+                  disabled={isCourtEmpty}
+                  icon={<GrReturn size={28} />}
+                  title="Annuler la dernière action"
+                  description="Cliquez pour annuler la dernière action effectuée"
+                />
+                <ActionButton
+                  onClick={handleValidateMovement}
+                  disabled={arrows.length === 0}
+                  icon={<Play size={28} />}
+                  title="Valider le mouvement"
+                  description="Cliquez pour animer le déplacement du joueur"
+                />
               </div>
             </div>
             <div>
@@ -496,6 +623,8 @@ const CreateSystem: React.FC = () => {
               arrows={arrows}
               selectingDottedArrow={selectingDottedArrow}
               dottedArrows={dottedArrows}
+              isAnimating={isAnimating}
+              animatingPlayer={animatingPlayer}
             />
           </div>
         </main>
