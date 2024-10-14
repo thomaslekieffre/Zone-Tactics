@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -15,6 +15,20 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import dynamic from "next/dynamic";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
+import { useRouter } from "next/router";
+
+// Définition du type pour une séquence d'animation
+type AnimationSequence = {
+  id: string;
+  players: {
+    id: string;
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  }[];
+  ball: { startX: number; startY: number; endX: number; endY: number } | null;
+};
 
 const PlayerButton = ({
   num,
@@ -145,6 +159,7 @@ const Court = ({
   dottedArrows,
   isAnimating,
   animatingPlayer,
+  isPlayingTimeline,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -307,6 +322,7 @@ const ActionButton = ({
 
 const CreateSystem: React.FC = () => {
   const { user } = useUser();
+  const router = useRouter();
 
   const [playersOnCourt, setPlayersOnCourt] = useState<
     Array<{ id: string; num: number; team: string; x: number; y: number }>
@@ -338,6 +354,9 @@ const CreateSystem: React.FC = () => {
 
   const [isAnimating, setIsAnimating] = useState(false);
   const [animatingPlayer, setAnimatingPlayer] = useState<any>(null);
+
+  const [timeline, setTimeline] = useState<AnimationSequence[]>([]);
+  const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
 
   const addToHistory = (action: string) => {
     setActionHistory((prev) => [...prev, action]);
@@ -488,12 +507,6 @@ const CreateSystem: React.FC = () => {
       targetX: number;
       targetY: number;
     } | null = null;
-    let ballReceiver: {
-      x: number;
-      y: number;
-      targetX: number;
-      targetY: number;
-    } | null = null;
 
     // Trouver le joueur qui a le ballon
     const playerWithBall = ballPosition
@@ -553,6 +566,27 @@ const CreateSystem: React.FC = () => {
     }
 
     if (playersToAnimate.length > 0 || ballToAnimate) {
+      const newSequence: AnimationSequence = {
+        id: Date.now().toString(),
+        players: playersToAnimate.map((player) => ({
+          id: player.id,
+          startX: player.x,
+          startY: player.y,
+          endX: player.targetX,
+          endY: player.targetY,
+        })),
+        ball: ballToAnimate
+          ? {
+              startX: ballPosition!.x,
+              startY: ballPosition!.y,
+              endX: ballToAnimate.targetX,
+              endY: ballToAnimate.targetY,
+            }
+          : null,
+      };
+
+      setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
+
       setAnimatingPlayer(playersToAnimate);
       setIsAnimating(true);
 
@@ -589,6 +623,53 @@ const CreateSystem: React.FC = () => {
     }
   };
 
+  const playTimeline = async () => {
+    setIsPlayingTimeline(true);
+    for (const sequence of timeline) {
+      await new Promise<void>((resolve) => {
+        setPlayersOnCourt((prevPlayers) =>
+          prevPlayers.map((player) => {
+            const animatingPlayer = sequence.players.find(
+              (p) => p.id === player.id
+            );
+            return animatingPlayer
+              ? {
+                  ...player,
+                  x: animatingPlayer.startX,
+                  y: animatingPlayer.startY,
+                }
+              : player;
+          })
+        );
+        if (sequence.ball) {
+          setBallPosition({ x: sequence.ball.startX, y: sequence.ball.startY });
+        }
+
+        setTimeout(() => {
+          setPlayersOnCourt((prevPlayers) =>
+            prevPlayers.map((player) => {
+              const animatingPlayer = sequence.players.find(
+                (p) => p.id === player.id
+              );
+              return animatingPlayer
+                ? {
+                    ...player,
+                    x: animatingPlayer.endX,
+                    y: animatingPlayer.endY,
+                  }
+                : player;
+            })
+          );
+          if (sequence.ball) {
+            setBallPosition({ x: sequence.ball.endX, y: sequence.ball.endY });
+          }
+          resolve();
+        }, 1000);
+      });
+    }
+    setIsPlayingTimeline(false);
+  };
+
   useEffect(() => {
     if (isAnimating) {
       const timer = setTimeout(() => {
@@ -605,7 +686,10 @@ const CreateSystem: React.FC = () => {
       <div className="h-screen bg-gray-900 overflow-hidden">
         <nav className="bg-blue-800 text-white flex justify-between p-4">
           <div className="flex items-center space-x-4">
-            <button className="back-button p-2">
+            <button
+              className="back-button p-2"
+              onClick={() => router.push("/")}
+            >
               <ArrowLeft size={20} />
             </button>
             <input
@@ -671,8 +755,18 @@ const CreateSystem: React.FC = () => {
                     disabled={arrows.length === 0 && dottedArrows.length === 0}
                     icon={<Check size={28} />}
                     title="Valider le mouvement"
-                    description="Cliquez pour animer le déplacement du joueur ou du ballon"
+                    description="Cliquez pour ajouter la séquence à la timeline"
                   />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
+                <div className="space-y-2">
+                  {timeline.map((sequence, index) => (
+                    <div key={sequence.id} className="bg-blue-700 p-2 rounded">
+                      Séquence {index + 1}
+                    </div>
+                  ))}
                 </div>
               </div>
               <div>
@@ -712,15 +806,13 @@ const CreateSystem: React.FC = () => {
               <div>
                 <h3 className="text-xl font-semibold mb-4">Animation :</h3>
                 <div className="space-y-2">
-                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                    <Play size={28} />
-                  </button>
-                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                    <Pause size={28} />
-                  </button>
-                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                    <RotateCw size={28} />
-                  </button>
+                  <ActionButton
+                    onClick={playTimeline}
+                    disabled={timeline.length === 0 || isPlayingTimeline}
+                    icon={<Play size={28} />}
+                    title="Jouer la timeline"
+                    description="Cliquez pour jouer toutes les séquences d'animation"
+                  />
                 </div>
               </div>
               <div>
@@ -753,6 +845,7 @@ const CreateSystem: React.FC = () => {
               dottedArrows={dottedArrows}
               isAnimating={isAnimating}
               animatingPlayer={animatingPlayer}
+              isPlayingTimeline={isPlayingTimeline}
             />
           </div>
         </main>
