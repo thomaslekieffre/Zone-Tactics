@@ -6,6 +6,7 @@ import {
   Play,
   Pause,
   MousePointer,
+  Check,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -14,7 +15,6 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 import dynamic from "next/dynamic";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
-import { motion } from "framer-motion";
 
 const PlayerButton = ({
   num,
@@ -186,33 +186,37 @@ const Court = ({
         style={{ backgroundImage: "url('/img/basket_court.png')" }}
       >
         {players.map((player: any) => (
-          <motion.div
+          <div
             key={player.id}
+            className={`absolute transition-all duration-1000 ease-in-out ${
+              selectingDottedArrow && player.team === "team1"
+                ? "animate-pulse"
+                : ""
+            }`}
             style={{
-              position: "absolute",
-              left: player.x,
-              top: player.y,
+              left: `${player.x}px`,
+              top: `${player.y}px`,
               transform: "translate(-50%, -50%)",
             }}
-            animate={
-              isAnimating && animatingPlayer?.id === player.id
-                ? { x: animatingPlayer.targetX, y: animatingPlayer.targetY }
-                : {}
-            }
-            transition={{ duration: 1, ease: "linear" }}
             onClick={() => onPlayerClick(player)}
           >
             <PlayerButton
               num={player.num}
               team={player.team}
               isOnCourt
-              isSelectable={selectingPlayerForBall || selectingPlayerForArrow}
+              isSelectable={
+                selectingPlayerForBall ||
+                selectingPlayerForArrow ||
+                selectingDottedArrow
+              }
               onClick={() =>
-                (selectingPlayerForBall || selectingPlayerForArrow) &&
+                (selectingPlayerForBall ||
+                  selectingPlayerForArrow ||
+                  selectingDottedArrow) &&
                 onPlayerClick(player)
               }
             />
-          </motion.div>
+          </div>
         ))}
 
         {arrows.map((arrow: any, index: number) => (
@@ -230,7 +234,7 @@ const Court = ({
 
         {ballPosition && (
           <div
-            className="absolute"
+            className="absolute transition-all duration-500 ease-in-out"
             style={{
               left: `${ballPosition.x}px`,
               top: `${ballPosition.y}px`,
@@ -358,25 +362,19 @@ const CreateSystem: React.FC = () => {
     }
   };
 
-  const handlePlayerClickForBall = (player: any) => {
-    if (selectingPlayerForBall) {
-      const ballX = player.x + 22;
-      const ballY = player.y;
-      setBallPosition({ x: ballX, y: ballY });
-      setSelectingPlayerForBall(false);
-      addToHistory("ball");
-    }
-  };
-
-  const handleArrowClick = () => {
-    setSelectingPlayerForArrow(true);
-    setSelectingPlayerForBall(false);
-    setArrowStart(null);
-  };
-
   const handlePlayerClick = (player: any) => {
     if (selectingPlayerForBall) {
-      handlePlayerClickForBall(player);
+      if (player.team === "team1") {
+        const ballX = player.x + 22; // Ajustez cette valeur si nécessaire
+        const ballY = player.y;
+        setBallPosition({ x: ballX, y: ballY });
+        setSelectingPlayerForBall(false);
+        addToHistory("ball");
+      } else {
+        alert(
+          "Vous ne pouvez donner le ballon qu'à un joueur de votre équipe (bleu)."
+        );
+      }
     } else if (selectingPlayerForArrow) {
       if (!arrowStart) {
         setArrowStart({ x: player.x, y: player.y });
@@ -399,20 +397,56 @@ const CreateSystem: React.FC = () => {
       setSelectingPlayerForArrow(false);
       addToHistory("arrow");
     } else if (selectingDottedArrow && ballPosition) {
-      setDottedArrows([
-        ...dottedArrows,
-        { start: ballPosition, end: position },
-      ]);
-      setSelectingDottedArrow(false);
-      addToHistory("dottedArrow");
+      const nearestPlayer = playersOnCourt.reduce<{
+        player: (typeof playersOnCourt)[0] | null;
+        distance: number;
+      }>(
+        (nearest, player) => {
+          if (player.team !== "team1") return nearest; // Ignorer les joueurs qui ne sont pas de l'équipe 1 (bleus)
+          const distance = Math.sqrt(
+            Math.pow(player.x - position.x, 2) +
+              Math.pow(player.y - position.y, 2)
+          );
+          return distance < nearest.distance ? { player, distance } : nearest;
+        },
+        { player: null, distance: Infinity }
+      );
+
+      if (nearestPlayer.player) {
+        setDottedArrows([
+          ...dottedArrows,
+          {
+            start: ballPosition,
+            end: { x: nearestPlayer.player.x, y: nearestPlayer.player.y },
+          },
+        ]);
+        setSelectingDottedArrow(false);
+        addToHistory("dottedArrow");
+      } else {
+        alert(
+          "Vous devez sélectionner un joueur de votre équipe (bleu) pour faire une passe."
+        );
+      }
     }
   };
 
   const handleDottedArrowClick = () => {
     if (ballPosition) {
-      setSelectingDottedArrow(true);
-      setSelectingPlayerForArrow(false);
-      setSelectingPlayerForBall(false);
+      const playerWithBall = playersOnCourt.find(
+        (player) =>
+          Math.abs(player.x - ballPosition.x + 22) < 5 &&
+          Math.abs(player.y - ballPosition.y) < 5
+      );
+
+      if (playerWithBall && playerWithBall.team === "team1") {
+        setSelectingDottedArrow(true);
+        setSelectingPlayerForArrow(false);
+        setSelectingPlayerForBall(false);
+      } else {
+        alert(
+          "Vous ne pouvez faire une passe qu'à partir d'un joueur de votre équipe (bleu)."
+        );
+      }
     }
   };
 
@@ -447,46 +481,124 @@ const CreateSystem: React.FC = () => {
   };
 
   const handleValidateMovement = () => {
-    if (arrows.length > 0) {
-      const lastArrow = arrows[arrows.length - 1];
+    const playersToAnimate: any[] = [];
+    let ballToAnimate: {
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+    } | null = null;
+    let ballReceiver: {
+      x: number;
+      y: number;
+      targetX: number;
+      targetY: number;
+    } | null = null;
+
+    // Trouver le joueur qui a le ballon
+    const playerWithBall = ballPosition
+      ? playersOnCourt.find(
+          (player) =>
+            Math.abs(player.x - ballPosition.x + 22) < 5 &&
+            Math.abs(player.y - ballPosition.y) < 5
+        )
+      : null;
+
+    arrows.forEach((arrow) => {
       const playerToMove = playersOnCourt.find(
         (player) =>
-          player.x === lastArrow.start.x && player.y === lastArrow.start.y
+          Math.abs(player.x - arrow.start.x) < 5 &&
+          Math.abs(player.y - arrow.start.y) < 5
       );
-
       if (playerToMove) {
-        setAnimatingPlayer({
+        playersToAnimate.push({
           ...playerToMove,
-          targetX: lastArrow.end.x - lastArrow.start.x,
-          targetY: lastArrow.end.y - lastArrow.start.y,
+          targetX: arrow.end.x,
+          targetY: arrow.end.y,
         });
-        setIsAnimating(true);
+
+        // Si ce joueur a le ballon, préparer l'animation du ballon
+        if (playerWithBall && playerWithBall.id === playerToMove.id) {
+          ballToAnimate = {
+            ...ballPosition!,
+            targetX: arrow.end.x + 22,
+            targetY: arrow.end.y,
+          };
+        }
       }
+    });
+
+    // Gérer les passes (flèches en pointillés)
+    if (dottedArrows.length > 0 && ballPosition) {
+      const lastDottedArrow = dottedArrows[dottedArrows.length - 1];
+      const ballReceiver = playersOnCourt.find(
+        (player) =>
+          Math.abs(player.x - lastDottedArrow.end.x) < 5 &&
+          Math.abs(player.y - lastDottedArrow.end.y) < 5
+      );
+      if (ballReceiver) {
+        const receiverAnimation = playersToAnimate.find(
+          (p) => p.id === ballReceiver.id
+        );
+        ballToAnimate = {
+          ...ballPosition,
+          targetX:
+            (receiverAnimation ? receiverAnimation.targetX : ballReceiver.x) +
+            22,
+          targetY: receiverAnimation
+            ? receiverAnimation.targetY
+            : ballReceiver.y,
+        };
+      }
+    }
+
+    if (playersToAnimate.length > 0 || ballToAnimate) {
+      setAnimatingPlayer(playersToAnimate);
+      setIsAnimating(true);
+
+      // Animer les joueurs
+      setTimeout(() => {
+        setPlayersOnCourt((players) =>
+          players.map((player) => {
+            const animatingPlayer = playersToAnimate.find(
+              (p) => p.id === player.id
+            );
+            return animatingPlayer
+              ? {
+                  ...player,
+                  x: animatingPlayer.targetX,
+                  y: animatingPlayer.targetY,
+                }
+              : player;
+          })
+        );
+
+        // Animer le ballon à la fin
+        if (ballToAnimate) {
+          setBallPosition({
+            x: ballToAnimate.targetX,
+            y: ballToAnimate.targetY,
+          });
+        }
+
+        setAnimatingPlayer([]);
+        setIsAnimating(false);
+        setArrows([]);
+        setDottedArrows([]);
+      }, 1000);
     }
   };
 
   useEffect(() => {
-    if (isAnimating && animatingPlayer) {
+    if (isAnimating) {
       const timer = setTimeout(() => {
-        setPlayersOnCourt((players) =>
-          players.map((player) =>
-            player.id === animatingPlayer.id
-              ? {
-                  ...player,
-                  x: player.x + animatingPlayer.targetX,
-                  y: player.y + animatingPlayer.targetY,
-                }
-              : player
-          )
-        );
         setIsAnimating(false);
-        setAnimatingPlayer(null);
         setArrows((arrows) => arrows.slice(0, -1)); // Supprime la dernière flèche
       }, 1000); // Durée de l'animation
 
       return () => clearTimeout(timer);
     }
-  }, [isAnimating, animatingPlayer]);
+  }, [isAnimating]);
 
   return (
     <DndProviderWithNoSSR backend={HTML5Backend}>
@@ -515,102 +627,118 @@ const CreateSystem: React.FC = () => {
             />
           </div>
         </nav>
-        <main className="flex h-full overflow-hidden">
-          <div className="bg-blue-800 p-4 text-white w-1/4 space-y-8 h-full">
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Actions :</h3>
-              <div className="space-y-2">
-                <ActionButton
-                  onClick={handleArrowClick}
-                  disabled={isCourtEmpty}
-                  icon={<ArrowRight size={28} />}
-                  title="Ajouter une flèche"
-                  description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
-                  isActive={selectingPlayerForArrow}
-                />
-                <ActionButton
-                  onClick={handleDottedArrowClick}
-                  disabled={!ballPosition}
-                  icon={<CgBorderStyleDotted size={28} />}
-                  title="Ajouter une flèche en pointillés"
-                  description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
-                  isActive={selectingDottedArrow}
-                />
-                {!ballPosition && (
+        <main className="flex h-[calc(100vh-4rem)] overflow-hidden">
+          <div className="bg-blue-800 p-4 text-white w-1/4 overflow-y-auto overflow-x-hidden">
+            <div className="space-y-8">
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Actions :</h3>
+                <div className="space-y-2">
                   <ActionButton
-                    onClick={handleBasketballClick}
+                    onClick={() => setSelectingPlayerForArrow(true)}
                     disabled={isCourtEmpty}
-                    icon={<TfiBasketball size={28} />}
-                    title="Placer le ballon"
-                    description="Cliquez pour placer le ballon sur un joueur"
-                    isActive={selectingPlayerForBall}
+                    icon={<ArrowRight size={28} />}
+                    title="Ajouter une flèche"
+                    description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
+                    isActive={selectingPlayerForArrow}
                   />
-                )}
-                <ActionButton
-                  onClick={handleUndo}
-                  disabled={isCourtEmpty}
-                  icon={<GrReturn size={28} />}
-                  title="Annuler la dernière action"
-                  description="Cliquez pour annuler la dernière action effectuée"
-                />
-                <ActionButton
-                  onClick={handleValidateMovement}
-                  disabled={arrows.length === 0}
-                  icon={<Play size={28} />}
-                  title="Valider le mouvement"
-                  description="Cliquez pour animer le déplacement du joueur"
-                />
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Équipe 1 :</h3>
-              <div className="flex space-x-2">
-                {team1Players.map((num) => (
-                  <PlayerButton
-                    key={num}
-                    num={num}
-                    team="team1"
-                    onDrop={() => handlePlayerDrop(num, "team1")}
-                    isOnCourt={playersOnCourt.some(
-                      (player) => player.num === num && player.team === "team1"
-                    )}
+                  <ActionButton
+                    onClick={handleDottedArrowClick}
+                    disabled={!ballPosition}
+                    icon={<CgBorderStyleDotted size={28} />}
+                    title="Ajouter une flèche en pointillés"
+                    description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
+                    isActive={selectingDottedArrow}
                   />
-                ))}
-              </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Équipe 2 :</h3>
-              <div className="flex space-x-2">
-                {team2Players.map((num) => (
-                  <PlayerButton
-                    key={num}
-                    num={num}
-                    team="team2"
-                    onDrop={() => handlePlayerDrop(num, "team2")}
-                    isOnCourt={playersOnCourt.some(
-                      (player) => player.num === num && player.team === "team2"
-                    )}
+                  {!ballPosition && (
+                    <ActionButton
+                      onClick={handleBasketballClick}
+                      disabled={isCourtEmpty}
+                      icon={<TfiBasketball size={28} />}
+                      title="Placer le ballon"
+                      description="Cliquez pour placer le ballon sur un joueur"
+                      isActive={selectingPlayerForBall}
+                    />
+                  )}
+                  <ActionButton
+                    onClick={handleUndo}
+                    disabled={isCourtEmpty}
+                    icon={<GrReturn size={28} />}
+                    title="Annuler la dernière action"
+                    description="Cliquez pour annuler la dernière action effectuée"
                   />
-                ))}
+                  <ActionButton
+                    onClick={handleValidateMovement}
+                    disabled={arrows.length === 0 && dottedArrows.length === 0}
+                    icon={<Check size={28} />}
+                    title="Valider le mouvement"
+                    description="Cliquez pour animer le déplacement du joueur ou du ballon"
+                  />
+                </div>
               </div>
-            </div>
-            <div>
-              <h3 className="text-xl font-semibold mb-4">Animation :</h3>
-              <div className="space-y-2">
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                  <Play size={28} />
-                </button>
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                  <Pause size={28} />
-                </button>
-                <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
-                  <RotateCw size={28} />
-                </button>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Équipe 1 :</h3>
+                <div className="flex flex-wrap gap-2">
+                  {team1Players.map((num) => (
+                    <PlayerButton
+                      key={num}
+                      num={num}
+                      team="team1"
+                      onDrop={() => handlePlayerDrop(num, "team1")}
+                      isOnCourt={playersOnCourt.some(
+                        (player) =>
+                          player.num === num && player.team === "team1"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Équipe 2 :</h3>
+                <div className="flex flex-wrap gap-2">
+                  {team2Players.map((num) => (
+                    <PlayerButton
+                      key={num}
+                      num={num}
+                      team="team2"
+                      onDrop={() => handlePlayerDrop(num, "team2")}
+                      isOnCourt={playersOnCourt.some(
+                        (player) =>
+                          player.num === num && player.team === "team2"
+                      )}
+                    />
+                  ))}
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Animation :</h3>
+                <div className="space-y-2">
+                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                    <Play size={28} />
+                  </button>
+                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                    <Pause size={28} />
+                  </button>
+                  <button className="bg-blue-600 p-2 rounded-lg flex items-center justify-center w-full hover:bg-blue-500 transition-colors">
+                    <RotateCw size={28} />
+                  </button>
+                </div>
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Instructions :</h3>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Les joueurs bleus sont votre équipe.</li>
+                  <li>Les joueurs rouges sont l'équipe adverse.</li>
+                  <li>
+                    Vous ne pouvez faire des passes qu'entre les joueurs bleus.
+                  </li>
+                  <li>Utilisez les flèches pleines pour les déplacements.</li>
+                  <li>Utilisez les flèches en pointillés pour les passes.</li>
+                </ul>
               </div>
             </div>
           </div>
 
-          <div className="flex-1 bg-gray-100 p-2 h-full">
+          <div className="flex-1 bg-gray-100 p-2">
             <Court
               players={playersOnCourt}
               setPlayers={setPlayersOnCourt}
