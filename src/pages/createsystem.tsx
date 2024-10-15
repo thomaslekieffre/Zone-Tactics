@@ -17,7 +17,6 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 
-// Définition du type pour une séquence d'animation
 type AnimationSequence = {
   id: string;
   players: {
@@ -28,6 +27,7 @@ type AnimationSequence = {
     endY: number;
   }[];
   ball: { startX: number; startY: number; endX: number; endY: number } | null;
+  comment: string;
 };
 
 const PlayerButton = ({
@@ -583,6 +583,7 @@ const CreateSystem: React.FC = () => {
               endY: ballToAnimate.targetY,
             }
           : null,
+        comment: "", // Initialisez le commentaire comme une chaîne vide
       };
 
       setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
@@ -764,7 +765,18 @@ const CreateSystem: React.FC = () => {
                 <div className="space-y-2">
                   {timeline.map((sequence, index) => (
                     <div key={sequence.id} className="bg-blue-700 p-2 rounded">
-                      Séquence {index + 1}
+                      <div>Séquence {index + 1}</div>
+                      <input
+                        type="text"
+                        value={sequence.comment}
+                        onChange={(e) => {
+                          const newTimeline = [...timeline];
+                          newTimeline[index].comment = e.target.value;
+                          setTimeline(newTimeline);
+                        }}
+                        className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
+                        placeholder="Ajouter un commentaire pour cette séquence..."
+                      />
                     </div>
                   ))}
                 </div>
