@@ -24,7 +24,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 
-type LocalAnimationSequence = {
+export type LocalAnimationSequence = {
   id: string;
   players: Array<{
     id: string;
@@ -53,8 +53,9 @@ type CreateSystemProps = {
       x: number;
       y: number;
     }>;
-    // Ajoutez d'autres propriétés si nécessaire
   };
+  readOnly?: boolean;
+  systemName?: string;
 };
 
 const PlayerButton = ({
@@ -189,6 +190,7 @@ const Court = ({
   isPlayingTimeline,
   width,
   height,
+  readOnly,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -224,12 +226,15 @@ const Court = ({
         backgroundImage: "url('/img/basket_court.png')",
         backgroundSize: "cover",
         backgroundPosition: "center",
+        pointerEvents: readOnly ? "none" : "auto",
       }}
       onClick={(e) => {
-        const courtRect = e.currentTarget.getBoundingClientRect();
-        const x = e.clientX - courtRect.left;
-        const y = e.clientY - courtRect.top;
-        onCourtClick({ x, y });
+        if (!readOnly) {
+          const courtRect = e.currentTarget.getBoundingClientRect();
+          const x = e.clientX - courtRect.left;
+          const y = e.clientY - courtRect.top;
+          onCourtClick({ x, y });
+        }
       }}
     >
       <div
@@ -356,13 +361,18 @@ const ActionButton = ({
   );
 };
 
-const COURT_WIDTH = 940; // Largeur fixe du terrain en pixels
-const COURT_HEIGHT = 500; // Hauteur fixe du terrain en pixels
+const COURT_WIDTH = 1200;
+const COURT_HEIGHT = 640;
 const COURT_ASPECT_RATIO = COURT_WIDTH / COURT_HEIGHT;
 
-const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
+const CreateSystem: React.FC<CreateSystemProps> = ({
+  initialData,
+  readOnly = false,
+  systemName: initialSystemName = "",
+}) => {
   const { user } = useUser();
   const router = useRouter();
+  const [systemName, setSystemName] = useState(initialSystemName);
 
   const [playersOnCourt, setPlayersOnCourt] = useState<
     Array<{ id: string; num: number; team: string; x: number; y: number }>
@@ -408,7 +418,10 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
 
   const [isPresentationMode, setIsPresentationMode] = useState(false);
 
-  const [courtSize, setCourtSize] = useState({ width: 0, height: 0 });
+  const [courtSize, setCourtSize] = useState({
+    width: COURT_WIDTH,
+    height: COURT_HEIGHT,
+  });
   const courtContainerRef = useRef<HTMLDivElement>(null);
 
   const [isMounted, setIsMounted] = useState(false);
@@ -427,12 +440,17 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
     containerWidth: number,
     containerHeight: number
   ) => {
-    let width = containerWidth;
-    let height = width / COURT_ASPECT_RATIO;
+    const containerAspectRatio = containerWidth / containerHeight;
+    let width, height;
 
-    if (height > containerHeight) {
-      height = containerHeight;
+    if (containerAspectRatio > COURT_ASPECT_RATIO) {
+      // Le conteneur est plus large que le terrain
+      height = containerHeight * 0.95; // 95% de la hauteur du conteneur
       width = height * COURT_ASPECT_RATIO;
+    } else {
+      // Le conteneur est plus haut que le terrain
+      width = containerWidth * 0.95; // 95% de la largeur du conteneur
+      height = width / COURT_ASPECT_RATIO;
     }
 
     return { width, height };
@@ -442,8 +460,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
     if (courtContainerRef.current) {
       const containerRect = courtContainerRef.current.getBoundingClientRect();
       const newSize = calculateCourtSize(
-        containerRect.width,
-        containerRect.height
+        Math.max(containerRect.width, COURT_WIDTH),
+        Math.max(containerRect.height, COURT_HEIGHT)
       );
       setCourtSize(newSize);
     }
@@ -461,17 +479,28 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
   }, [isMounted]);
 
   useEffect(() => {
-    window.addEventListener("resize", updateCourtSize);
-    return () => window.removeEventListener("resize", updateCourtSize);
+    const handleResize = () => {
+      if (courtContainerRef.current) {
+        updateCourtSize();
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Appel initial
+
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   useEffect(() => {
+    updateCourtSize();
+  }, [isPresentationMode]);
+
+  useEffect(() => {
     if (initialData) {
-      // Initialiser d'autres états si nécessaire
-      // Par exemple :
-      // setBallPosition(initialData.ballPosition);
-      // setArrows(initialData.arrows);
-      // setDottedArrows(initialData.dottedArrows);
+      console.log("Données initiales reçues:", initialData);
+      setTimeline(initialData.timeline);
+      setPlayersOnCourt(initialData.playersOnCourt);
+      // Autres initialisations...
     }
   }, [initialData]);
 
@@ -902,15 +931,18 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
   };
 
   const generateShareLink = async () => {
-    // Créez un objet contenant toutes les données nécessaires pour recréer le système
+    if (!systemName.trim()) {
+      alert("Veuillez donner un nom à votre système avant de le partager.");
+      return;
+    }
+
     const systemData = {
+      name: systemName,
       timeline,
       playersOnCourt,
-      // Ajoutez d'autres données pertinentes ici
     };
 
     try {
-      // Envoyez les données au serveur et obtenez un ID unique
       const response = await fetch("/api/share-system", {
         method: "POST",
         headers: {
@@ -919,20 +951,16 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
         body: JSON.stringify(systemData),
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de la création du lien de partage");
+      if (response.ok) {
+        const { id } = await response.json();
+        const link = `${window.location.origin}/shared-system/${id}`;
+        setShareLink(link);
+      } else {
+        alert("Erreur lors de la génération du lien de partage.");
       }
-
-      const { id } = await response.json();
-
-      // Créez le lien de partage
-      const link = `${window.location.origin}/shared-system/${id}`;
-      setShareLink(link);
     } catch (error) {
-      console.error("Erreur lors de la génération du lien de partage:", error);
-      alert(
-        "Une erreur est survenue lors de la création du lien de partage. Veuillez réessayer."
-      );
+      console.error("Erreur lors du partage du système:", error);
+      alert("Une erreur est survenue lors du partage du système.");
     }
   };
 
@@ -961,11 +989,22 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
               >
                 <ArrowLeft size={20} />
               </button>
-              <input
-                type="text"
-                placeholder="Nom du système"
-                className="bg-blue-700 rounded-md px-4 py-2 focus:outline-none"
-              />
+              {readOnly ? (
+                <input
+                  type="text"
+                  value={systemName}
+                  readOnly
+                  className="bg-blue-700 text-white rounded px-2 py-1 cursor-not-allowed"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={systemName}
+                  onChange={(e) => setSystemName(e.target.value)}
+                  placeholder="Nom du système"
+                  className="bg-blue-700 text-white rounded px-2 py-1"
+                />
+              )}
             </div>
             <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize">
               {user?.username}
@@ -982,7 +1021,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
           </nav>
         )}
         <main className="flex h-[calc(100vh-4rem)] overflow-hidden">
-          {!isPresentationMode && (
+          {!isPresentationMode && !readOnly && (
             <div className="w-1/4 bg-blue-800 p-4 text-white overflow-y-auto">
               <div className="space-y-8">
                 <div>
@@ -1169,10 +1208,13 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
                       onClick={generateShareLink}
                       icon={<Share2 size={28} />}
                       title="Générer un lien de partage"
-                      description="Créez un lien pour partager votre système avec d'autres personnes"
+                      description="Créez un lien pour partager votre syst��me avec d'autres personnes"
                     />
                     {shareLink && (
                       <div className="mt-2">
+                        <p className="text-white mb-1">
+                          Système partagé : {systemName}
+                        </p>
                         <input
                           type="text"
                           value={shareLink}
@@ -1192,40 +1234,95 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
               </div>
             </div>
           )}
-          <div
-            className={`flex-1 ${
-              isPresentationMode ? "flex items-center justify-center" : "p-4"
-            }`}
-          >
+          {!isPresentationMode && readOnly && (
+            <div className="w-1/4 bg-blue-800 p-4 text-white overflow-y-auto">
+              <h3 className="text-xl font-semibold mb-4">
+                Système partagé : {systemName}
+              </h3>
+              <p className="mb-4">
+                Ce système est en mode lecture seule. Vous pouvez le visualiser
+                mais pas le modifier.
+              </p>
+              <div className="space-y-2 mb-4">
+                <ActionButton
+                  onClick={playTimeline}
+                  disabled={timeline.length === 0 || isPlayingTimeline}
+                  icon={<Play size={28} />}
+                  title="Jouer la timeline"
+                  description="Cliquez pour jouer toutes les séquences d'animation"
+                />
+                <ActionButton
+                  onClick={togglePresentationMode}
+                  icon={<Maximize size={28} />}
+                  title="Mode présentation"
+                  description="Passer en mode présentation pour l'enregistrement"
+                />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
+                <div className="space-y-2">
+                  {timeline.map((sequence, index) => (
+                    <div key={index} className="bg-blue-700 p-2 rounded">
+                      <div>Séquence {index + 1}</div>
+                      <p className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1">
+                        {sequence.comment}
+                      </p>
+                      {sequence.audioComment && (
+                        <div className="mt-2">
+                          <audio
+                            src={sequence.audioComment}
+                            controls
+                            className="h-8 w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+          <div className="flex-grow flex items-center justify-center bg-gray-900 overflow-auto">
             <div
               ref={courtContainerRef}
-              className="w-full h-full flex items-center justify-center"
+              className="relative"
+              style={{
+                width: `${courtSize.width}px`,
+                height: `${courtSize.height}px`,
+                maxWidth: "100%",
+                maxHeight: "100%",
+              }}
             >
-              {isMounted && (
-                <Court
-                  players={playersOnCourt}
-                  setPlayers={setPlayersOnCourt}
-                  onPlayerClick={handlePlayerClick}
-                  ballPosition={ballPosition}
-                  selectingPlayerForBall={selectingPlayerForBall}
-                  selectingPlayerForArrow={selectingPlayerForArrow}
-                  onCourtClick={handleCourtClick}
-                  arrowStart={arrowStart}
-                  arrows={arrows}
-                  selectingDottedArrow={selectingDottedArrow}
-                  dottedArrows={dottedArrows}
-                  isAnimating={isAnimating}
-                  animatingPlayer={animatingPlayer}
-                  isPlayingTimeline={isPlayingTimeline}
-                  width={courtSize.width}
-                  height={courtSize.height}
-                />
-              )}
+              <Court
+                players={playersOnCourt}
+                setPlayers={setPlayersOnCourt}
+                onPlayerClick={handlePlayerClick}
+                ballPosition={ballPosition}
+                selectingPlayerForBall={selectingPlayerForBall}
+                selectingPlayerForArrow={selectingPlayerForArrow}
+                onCourtClick={handleCourtClick}
+                arrowStart={arrowStart}
+                arrows={arrows}
+                selectingDottedArrow={selectingDottedArrow}
+                dottedArrows={dottedArrows}
+                isAnimating={isAnimating}
+                animatingPlayer={animatingPlayer}
+                isPlayingTimeline={isPlayingTimeline}
+                width={courtSize.width}
+                height={courtSize.height}
+                readOnly={readOnly}
+              />
             </div>
           </div>
         </main>
         {isPresentationMode && (
           <div className="absolute top-4 left-4 flex space-x-4">
+            <ActionButton
+              onClick={togglePresentationMode}
+              icon={<Minimize size={28} />}
+              title="Quitter le mode présentation"
+              description="Cliquez pour revenir à l'interface normale"
+            />
             {!isRecording ? (
               <ActionButton
                 onClick={startRecording}
@@ -1239,7 +1336,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
                 icon={<StopCircle size={28} />}
                 title="Arrêter l'enregistrement"
                 description="Cliquez pour arrêter l'enregistrement et télécharger la vidéo"
-                isActive={true}
               />
             )}
             <ActionButton

@@ -9,6 +9,9 @@ export default function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "POST") {
     try {
       const systemData = req.body;
+      if (!systemData.name) {
+        return res.status(400).json({ error: "Le nom du système est requis" });
+      }
       const id = uuidv4();
 
       let sharedSystems: { [key: string]: any } = {};

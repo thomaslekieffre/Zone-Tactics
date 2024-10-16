@@ -1,11 +1,23 @@
 import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
-import CreateSystem from "../createsystem";
+import CreateSystem, { LocalAnimationSequence } from "../createsystem";
+
+interface SystemData {
+  name: string;
+  timeline: LocalAnimationSequence[];
+  playersOnCourt: {
+    id: string;
+    num: number;
+    team: string;
+    x: number;
+    y: number;
+  }[];
+}
 
 const SharedSystem = () => {
   const router = useRouter();
   const { id } = router.query;
-  const [systemData, setSystemData] = useState(null);
+  const [systemData, setSystemData] = useState<SystemData | null>(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
@@ -18,7 +30,10 @@ const SharedSystem = () => {
           }
           return response.json();
         })
-        .then((data) => setSystemData(data))
+        .then((data) => {
+          console.log("Données du système reçues:", data);
+          setSystemData(data);
+        })
         .catch((error) => {
           console.error(
             "Erreur lors de la récupération du système partagé:",
@@ -37,7 +52,13 @@ const SharedSystem = () => {
     return <div>Chargement...</div>;
   }
 
-  return <CreateSystem initialData={systemData} />;
+  return (
+    <CreateSystem
+      initialData={systemData}
+      readOnly={true}
+      systemName={systemData?.name}
+    />
+  );
 };
 
 export default SharedSystem;
