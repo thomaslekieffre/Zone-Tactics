@@ -169,6 +169,8 @@ const Court = ({
   isAnimating,
   animatingPlayer,
   isPlayingTimeline,
+  width,
+  height,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -197,7 +199,14 @@ const Court = ({
   return (
     <div
       ref={drop as unknown as React.LegacyRef<HTMLDivElement>}
-      className="w-full h-full bg-orange-500 rounded-lg relative court-container"
+      className="bg-orange-500 rounded-lg relative court-container"
+      style={{
+        width: `${width}px`,
+        height: `${height}px`,
+        backgroundImage: "url('/img/basket_court.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }}
       onClick={(e) => {
         const courtRect = e.currentTarget.getBoundingClientRect();
         const x = e.clientX - courtRect.left;
@@ -329,6 +338,10 @@ const ActionButton = ({
   );
 };
 
+const COURT_WIDTH = 940; // Largeur fixe du terrain en pixels
+const COURT_HEIGHT = 500; // Hauteur fixe du terrain en pixels
+const COURT_ASPECT_RATIO = COURT_WIDTH / COURT_HEIGHT;
+
 const CreateSystem: React.FC = () => {
   const { user } = useUser();
   const router = useRouter();
@@ -375,8 +388,57 @@ const CreateSystem: React.FC = () => {
 
   const [isPresentationMode, setIsPresentationMode] = useState(false);
 
+  const [courtSize, setCourtSize] = useState({ width: 0, height: 0 });
+  const courtContainerRef = useRef<HTMLDivElement>(null);
+
+  const [isMounted, setIsMounted] = useState(false);
+
+  const calculateCourtSize = (
+    containerWidth: number,
+    containerHeight: number
+  ) => {
+    let width = containerWidth;
+    let height = width / COURT_ASPECT_RATIO;
+
+    if (height > containerHeight) {
+      height = containerHeight;
+      width = height * COURT_ASPECT_RATIO;
+    }
+
+    return { width, height };
+  };
+
+  const updateCourtSize = () => {
+    if (courtContainerRef.current) {
+      const containerRect = courtContainerRef.current.getBoundingClientRect();
+      const newSize = calculateCourtSize(
+        containerRect.width,
+        containerRect.height
+      );
+      setCourtSize(newSize);
+    }
+  };
+
+  useEffect(() => {
+    setIsMounted(true);
+    return () => setIsMounted(false);
+  }, []);
+
+  useEffect(() => {
+    if (isMounted) {
+      updateCourtSize();
+    }
+  }, [isMounted]);
+
+  useEffect(() => {
+    window.addEventListener("resize", updateCourtSize);
+    return () => window.removeEventListener("resize", updateCourtSize);
+  }, []);
+
   const togglePresentationMode = () => {
     setIsPresentationMode(!isPresentationMode);
+    // Nous utilisons un setTimeout pour laisser le temps au DOM de se mettre à jour
+    setTimeout(updateCourtSize, 0);
   };
 
   const startRecording = async () => {
@@ -786,15 +848,9 @@ const CreateSystem: React.FC = () => {
             </div>
           </nav>
         )}
-        <main
-          className={`${
-            isPresentationMode
-              ? "w-full h-full relative"
-              : "flex h-[calc(100vh-4rem)] overflow-hidden"
-          }`}
-        >
+        <main className="flex h-[calc(100vh-4rem)] overflow-hidden">
           {!isPresentationMode && (
-            <div className="bg-blue-800 p-4 text-white w-1/4 overflow-y-auto overflow-x-hidden">
+            <div className="w-1/4 bg-blue-800 p-4 text-white overflow-y-auto">
               <div className="space-y-8">
                 <div>
                   <h3 className="text-xl font-semibold mb-4">Actions :</h3>
@@ -941,56 +997,64 @@ const CreateSystem: React.FC = () => {
             </div>
           )}
           <div
-            className={`${
-              isPresentationMode ? "w-full h-full" : "flex-1 bg-gray-100 p-2"
+            className={`flex-1 ${
+              isPresentationMode ? "flex items-center justify-center" : "p-4"
             }`}
-            ref={courtRef}
           >
-            <Court
-              players={playersOnCourt}
-              setPlayers={setPlayersOnCourt}
-              onPlayerClick={handlePlayerClick}
-              ballPosition={ballPosition}
-              selectingPlayerForBall={selectingPlayerForBall}
-              selectingPlayerForArrow={selectingPlayerForArrow}
-              onCourtClick={handleCourtClick}
-              arrowStart={arrowStart}
-              arrows={arrows}
-              selectingDottedArrow={selectingDottedArrow}
-              dottedArrows={dottedArrows}
-              isAnimating={isAnimating}
-              animatingPlayer={animatingPlayer}
-              isPlayingTimeline={isPlayingTimeline}
-            />
-          </div>
-          {isPresentationMode && (
-            <div className="absolute top-4 left-4 flex space-x-4">
-              {!isRecording ? (
-                <ActionButton
-                  onClick={startRecording}
-                  icon={<Video size={28} />}
-                  title="Démarrer l'enregistrement"
-                  description="Cliquez pour commencer à enregistrer votre système en vidéo"
-                />
-              ) : (
-                <ActionButton
-                  onClick={stopRecording}
-                  icon={<StopCircle size={28} />}
-                  title="Arrêter l'enregistrement"
-                  description="Cliquez pour arrêter l'enregistrement et télécharger la vidéo"
-                  isActive={true}
+            <div
+              ref={courtContainerRef}
+              className="w-full h-full flex items-center justify-center"
+            >
+              {isMounted && (
+                <Court
+                  players={playersOnCourt}
+                  setPlayers={setPlayersOnCourt}
+                  onPlayerClick={handlePlayerClick}
+                  ballPosition={ballPosition}
+                  selectingPlayerForBall={selectingPlayerForBall}
+                  selectingPlayerForArrow={selectingPlayerForArrow}
+                  onCourtClick={handleCourtClick}
+                  arrowStart={arrowStart}
+                  arrows={arrows}
+                  selectingDottedArrow={selectingDottedArrow}
+                  dottedArrows={dottedArrows}
+                  isAnimating={isAnimating}
+                  animatingPlayer={animatingPlayer}
+                  isPlayingTimeline={isPlayingTimeline}
+                  width={courtSize.width}
+                  height={courtSize.height}
                 />
               )}
-              <ActionButton
-                onClick={playTimeline}
-                disabled={timeline.length === 0 || isPlayingTimeline}
-                icon={<Play size={28} />}
-                title="Jouer la timeline"
-                description="Cliquez pour jouer toutes les séquences d'animation"
-              />
             </div>
-          )}
+          </div>
         </main>
+        {isPresentationMode && (
+          <div className="absolute top-4 left-4 flex space-x-4">
+            {!isRecording ? (
+              <ActionButton
+                onClick={startRecording}
+                icon={<Video size={28} />}
+                title="Démarrer l'enregistrement"
+                description="Cliquez pour commencer à enregistrer votre système en vidéo"
+              />
+            ) : (
+              <ActionButton
+                onClick={stopRecording}
+                icon={<StopCircle size={28} />}
+                title="Arrêter l'enregistrement"
+                description="Cliquez pour arrêter l'enregistrement et télécharger la vidéo"
+                isActive={true}
+              />
+            )}
+            <ActionButton
+              onClick={playTimeline}
+              disabled={timeline.length === 0 || isPlayingTimeline}
+              icon={<Play size={28} />}
+              title="Jouer la timeline"
+              description="Cliquez pour jouer toutes les séquences d'animation"
+            />
+          </div>
+        )}
         {isPresentationMode && (
           <button
             className="absolute top-4 right-4 bg-blue-500 text-white p-2 rounded"
