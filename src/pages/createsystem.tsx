@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef } from "react";
 import {
   ArrowLeft,
   ArrowRight,
-  RotateCw,
   Play,
   Pause,
   MousePointer,
@@ -14,6 +13,7 @@ import {
   Mic,
   MicOff,
   Trash2,
+  Share2,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -41,6 +41,20 @@ type LocalAnimationSequence = {
   };
   comment: string;
   audioComment?: string; // URL de l'audio enregistré
+};
+
+type CreateSystemProps = {
+  initialData?: {
+    timeline: LocalAnimationSequence[];
+    playersOnCourt: Array<{
+      id: string;
+      num: number;
+      team: string;
+      x: number;
+      y: number;
+    }>;
+    // Ajoutez d'autres propriétés si nécessaire
+  };
 };
 
 const PlayerButton = ({
@@ -346,13 +360,13 @@ const COURT_WIDTH = 940; // Largeur fixe du terrain en pixels
 const COURT_HEIGHT = 500; // Hauteur fixe du terrain en pixels
 const COURT_ASPECT_RATIO = COURT_WIDTH / COURT_HEIGHT;
 
-const CreateSystem: React.FC = () => {
+const CreateSystem: React.FC<CreateSystemProps> = ({ initialData }) => {
   const { user } = useUser();
   const router = useRouter();
 
   const [playersOnCourt, setPlayersOnCourt] = useState<
     Array<{ id: string; num: number; team: string; x: number; y: number }>
-  >([]);
+  >(initialData?.playersOnCourt || []);
 
   const [team1Players, setTeam1Players] = useState([1, 2, 3, 4, 5]);
   const [team2Players, setTeam2Players] = useState([1, 2, 3, 4, 5]);
@@ -381,7 +395,9 @@ const CreateSystem: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [animatingPlayer, setAnimatingPlayer] = useState<any>(null);
 
-  const [timeline, setTimeline] = useState<LocalAnimationSequence[]>([]);
+  const [timeline, setTimeline] = useState<LocalAnimationSequence[]>(
+    initialData?.timeline || []
+  );
   const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
 
   const courtRef = useRef<HTMLDivElement>(null);
@@ -404,6 +420,8 @@ const CreateSystem: React.FC = () => {
   const [currentRecordingIndex, setCurrentRecordingIndex] = useState<
     number | null
   >(null);
+
+  const [shareLink, setShareLink] = useState<string | null>(null);
 
   const calculateCourtSize = (
     containerWidth: number,
@@ -446,6 +464,16 @@ const CreateSystem: React.FC = () => {
     window.addEventListener("resize", updateCourtSize);
     return () => window.removeEventListener("resize", updateCourtSize);
   }, []);
+
+  useEffect(() => {
+    if (initialData) {
+      // Initialiser d'autres états si nécessaire
+      // Par exemple :
+      // setBallPosition(initialData.ballPosition);
+      // setArrows(initialData.arrows);
+      // setDottedArrows(initialData.dottedArrows);
+    }
+  }, [initialData]);
 
   const togglePresentationMode = () => {
     setIsPresentationMode(!isPresentationMode);
@@ -873,6 +901,50 @@ const CreateSystem: React.FC = () => {
     }
   };
 
+  const generateShareLink = async () => {
+    // Créez un objet contenant toutes les données nécessaires pour recréer le système
+    const systemData = {
+      timeline,
+      playersOnCourt,
+      // Ajoutez d'autres données pertinentes ici
+    };
+
+    try {
+      // Envoyez les données au serveur et obtenez un ID unique
+      const response = await fetch("/api/share-system", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(systemData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erreur lors de la création du lien de partage");
+      }
+
+      const { id } = await response.json();
+
+      // Créez le lien de partage
+      const link = `${window.location.origin}/shared-system/${id}`;
+      setShareLink(link);
+    } catch (error) {
+      console.error("Erreur lors de la génération du lien de partage:", error);
+      alert(
+        "Une erreur est survenue lors de la création du lien de partage. Veuillez réessayer."
+      );
+    }
+  };
+
+  const copyShareLink = () => {
+    if (shareLink) {
+      navigator.clipboard
+        .writeText(shareLink)
+        .then(() => alert("Lien copié dans le presse-papiers !"))
+        .catch((err) => console.error("Erreur lors de la copie du lien:", err));
+    }
+  };
+
   return (
     <DndProviderWithNoSSR backend={HTML5Backend}>
       <div
@@ -1089,6 +1161,33 @@ const CreateSystem: React.FC = () => {
                     <li>Utilisez les flèches pleines pour les déplacements.</li>
                     <li>Utilisez les flèches en pointillés pour les passes.</li>
                   </ul>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Partage :</h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={generateShareLink}
+                      icon={<Share2 size={28} />}
+                      title="Générer un lien de partage"
+                      description="Créez un lien pour partager votre système avec d'autres personnes"
+                    />
+                    {shareLink && (
+                      <div className="mt-2">
+                        <input
+                          type="text"
+                          value={shareLink}
+                          readOnly
+                          className="w-full bg-blue-700 text-white rounded px-2 py-1"
+                        />
+                        <button
+                          onClick={copyShareLink}
+                          className="mt-1 bg-blue-500 text-white px-2 py-1 rounded"
+                        >
+                          Copier le lien
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
