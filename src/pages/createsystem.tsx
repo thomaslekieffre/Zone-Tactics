@@ -11,6 +11,9 @@ import {
   StopCircle,
   Maximize,
   Minimize,
+  Mic,
+  MicOff,
+  Trash2,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -37,6 +40,7 @@ type LocalAnimationSequence = {
     endY: number;
   };
   comment: string;
+  audioComment?: string; // URL de l'audio enregistré
 };
 
 const PlayerButton = ({
@@ -393,6 +397,14 @@ const CreateSystem: React.FC = () => {
 
   const [isMounted, setIsMounted] = useState(false);
 
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(
+    null
+  );
+  const [currentRecordingIndex, setCurrentRecordingIndex] = useState<
+    number | null
+  >(null);
+
   const calculateCourtSize = (
     containerWidth: number,
     containerHeight: number
@@ -712,6 +724,7 @@ const CreateSystem: React.FC = () => {
             }
           : undefined,
         comment: "", // Initialisez le commentaire comme une chaîne vide
+        audioComment: undefined, // Initialisez le commentaire audio comme undefined
       };
 
       setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
@@ -811,6 +824,54 @@ const CreateSystem: React.FC = () => {
       return () => clearTimeout(timer);
     }
   }, [isAnimating]);
+
+  const startAudioRecording = async (index: number) => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const recorder = new MediaRecorder(stream);
+      const audioChunks: Blob[] = [];
+
+      recorder.ondataavailable = (e) => {
+        audioChunks.push(e.data);
+      };
+
+      recorder.onstop = () => {
+        const audioBlob = new Blob(audioChunks, { type: "audio/wav" });
+        const audioUrl = URL.createObjectURL(audioBlob);
+
+        const newTimeline = [...timeline];
+        newTimeline[index].audioComment = audioUrl;
+        setTimeline(newTimeline);
+      };
+
+      setAudioRecorder(recorder);
+      setIsRecordingAudio(true);
+      setCurrentRecordingIndex(index);
+      recorder.start();
+    } catch (error) {
+      console.error("Erreur lors de l'enregistrement audio:", error);
+      alert(
+        "Impossible d'accéder au microphone. Veuillez vérifier les permissions."
+      );
+    }
+  };
+
+  const stopAudioRecording = () => {
+    if (audioRecorder && audioRecorder.state === "recording") {
+      audioRecorder.stop();
+      setIsRecordingAudio(false);
+      setCurrentRecordingIndex(null);
+    }
+  };
+
+  const deleteAudioComment = (index: number) => {
+    const newTimeline = [...timeline];
+    if (newTimeline[index].audioComment) {
+      URL.revokeObjectURL(newTimeline[index].audioComment);
+      delete newTimeline[index].audioComment;
+      setTimeline(newTimeline);
+    }
+  };
 
   return (
     <DndProviderWithNoSSR backend={HTML5Backend}>
@@ -916,6 +977,42 @@ const CreateSystem: React.FC = () => {
                           className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
                           placeholder="Ajouter un commentaire pour cette séquence..."
                         />
+                        <div className="mt-2 flex items-center space-x-2">
+                          {!isRecordingAudio ||
+                          currentRecordingIndex !== index ? (
+                            <button
+                              onClick={() => startAudioRecording(index)}
+                              className="bg-green-500 text-white p-2 rounded"
+                              title="Enregistrer un commentaire audio"
+                            >
+                              <Mic size={20} />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={stopAudioRecording}
+                              className="bg-red-500 text-white p-2 rounded animate-pulse"
+                              title="Arrêter l'enregistrement"
+                            >
+                              <MicOff size={20} />
+                            </button>
+                          )}
+                          {sequence.audioComment && (
+                            <>
+                              <audio
+                                src={sequence.audioComment}
+                                controls
+                                className="h-8"
+                              />
+                              <button
+                                onClick={() => deleteAudioComment(index)}
+                                className="bg-red-500 text-white p-2 rounded"
+                                title="Supprimer le commentaire audio"
+                              >
+                                <Trash2 size={20} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
