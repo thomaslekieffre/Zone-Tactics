@@ -7,6 +7,10 @@ import {
   Pause,
   MousePointer,
   Check,
+  Video,
+  StopCircle,
+  Maximize,
+  Minimize,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -17,16 +21,21 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 
-type AnimationSequence = {
+type LocalAnimationSequence = {
   id: string;
-  players: {
+  players: Array<{
     id: string;
     startX: number;
     startY: number;
     endX: number;
     endY: number;
-  }[];
-  ball: { startX: number; startY: number; endX: number; endY: number } | null;
+  }>;
+  ball?: {
+    startX: number;
+    startY: number;
+    endX: number;
+    endY: number;
+  };
   comment: string;
 };
 
@@ -300,12 +309,12 @@ const ActionButton = ({
   return (
     <div className="relative group">
       <button
-        className={`p-2 rounded-lg flex items-center justify-center w-full transition-colors ${
+        className={`p-2 rounded-lg flex items-center justify-center w-full transition-all duration-300 ${
           disabled
             ? "bg-blue-600 opacity-50 cursor-not-allowed"
             : isActive
-            ? "bg-yellow-500 hover:bg-yellow-400 border-yellow-300"
-            : "bg-blue-600 hover:bg-blue-500"
+            ? "bg-yellow-500 hover:bg-yellow-400 hover:shadow-md border-yellow-300"
+            : "bg-blue-600 hover:bg-blue-500 hover:shadow-md hover:scale-105"
         }`}
         onClick={onClick}
         disabled={disabled}
@@ -355,8 +364,65 @@ const CreateSystem: React.FC = () => {
   const [isAnimating, setIsAnimating] = useState(false);
   const [animatingPlayer, setAnimatingPlayer] = useState<any>(null);
 
-  const [timeline, setTimeline] = useState<AnimationSequence[]>([]);
+  const [timeline, setTimeline] = useState<LocalAnimationSequence[]>([]);
   const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
+
+  const courtRef = useRef<HTMLDivElement>(null);
+
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+
+  const togglePresentationMode = () => {
+    setIsPresentationMode(!isPresentationMode);
+  };
+
+  const startRecording = async () => {
+    if (!isPresentationMode) {
+      alert(
+        "Veuillez d'abord passer en mode présentation pour enregistrer uniquement le terrain."
+      );
+      return;
+    }
+
+    const stream = await navigator.mediaDevices.getDisplayMedia({
+      video: true,
+    });
+    const mediaRecorder = new MediaRecorder(stream);
+
+    mediaRecorderRef.current = mediaRecorder;
+    chunksRef.current = [];
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) {
+        chunksRef.current.push(event.data);
+      }
+    };
+
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(chunksRef.current, { type: "video/webm" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      document.body.appendChild(a);
+      a.style.display = "none";
+      a.href = url;
+      a.download = "basketball-system.webm";
+      a.click();
+      window.URL.revokeObjectURL(url);
+    };
+
+    mediaRecorder.start();
+    setIsRecording(true);
+  };
+
+  const stopRecording = () => {
+    if (mediaRecorderRef.current) {
+      mediaRecorderRef.current.stop();
+      setIsRecording(false);
+    }
+  };
 
   const addToHistory = (action: string) => {
     setActionHistory((prev) => [...prev, action]);
@@ -566,7 +632,7 @@ const CreateSystem: React.FC = () => {
     }
 
     if (playersToAnimate.length > 0 || ballToAnimate) {
-      const newSequence: AnimationSequence = {
+      const newSequence: LocalAnimationSequence = {
         id: Date.now().toString(),
         players: playersToAnimate.map((player) => ({
           id: player.id,
@@ -582,7 +648,7 @@ const CreateSystem: React.FC = () => {
               endX: ballToAnimate.targetX,
               endY: ballToAnimate.targetY,
             }
-          : null,
+          : undefined,
         comment: "", // Initialisez le commentaire comme une chaîne vide
       };
 
@@ -628,6 +694,7 @@ const CreateSystem: React.FC = () => {
     setIsPlayingTimeline(true);
     for (const sequence of timeline) {
       await new Promise<void>((resolve) => {
+        // Appliquer les changements de position initiale
         setPlayersOnCourt((prevPlayers) =>
           prevPlayers.map((player) => {
             const animatingPlayer = sequence.players.find(
@@ -647,6 +714,7 @@ const CreateSystem: React.FC = () => {
         }
 
         setTimeout(() => {
+          // Appliquer les changements de position finale
           setPlayersOnCourt((prevPlayers) =>
             prevPlayers.map((player) => {
               const animatingPlayer = sequence.players.find(
@@ -684,165 +752,200 @@ const CreateSystem: React.FC = () => {
 
   return (
     <DndProviderWithNoSSR backend={HTML5Backend}>
-      <div className="h-screen bg-gray-900 overflow-hidden">
-        <nav className="bg-blue-800 text-white flex justify-between p-4">
-          <div className="flex items-center space-x-4">
-            <button
-              className="back-button p-2"
-              onClick={() => router.push("/")}
-            >
-              <ArrowLeft size={20} />
-            </button>
-            <input
-              type="text"
-              placeholder="Nom du système"
-              className="bg-blue-700 rounded-md px-4 py-2 focus:outline-none"
-            />
-          </div>
-          <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize">
-            {user?.username}
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: "ml-4 w-10 h-10",
-                  userButtonAvatarBox: "w-10 h-10",
-                },
-              }}
-            />
-          </div>
-        </nav>
-        <main className="flex h-[calc(100vh-4rem)] overflow-hidden">
-          <div className="bg-blue-800 p-4 text-white w-1/4 overflow-y-auto overflow-x-hidden">
-            <div className="space-y-8">
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Actions :</h3>
-                <div className="space-y-2">
-                  <ActionButton
-                    onClick={() => setSelectingPlayerForArrow(true)}
-                    disabled={isCourtEmpty}
-                    icon={<ArrowRight size={28} />}
-                    title="Ajouter une flèche"
-                    description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
-                    isActive={selectingPlayerForArrow}
-                  />
-                  <ActionButton
-                    onClick={handleDottedArrowClick}
-                    disabled={!ballPosition}
-                    icon={<CgBorderStyleDotted size={28} />}
-                    title="Ajouter une flèche en pointillés"
-                    description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
-                    isActive={selectingDottedArrow}
-                  />
-                  {!ballPosition && (
+      <div
+        className={`h-screen bg-gray-900 overflow-hidden ${
+          isPresentationMode ? "flex items-center justify-center" : ""
+        }`}
+      >
+        {!isPresentationMode && (
+          <nav className="bg-blue-800 text-white flex justify-between p-4">
+            <div className="flex items-center space-x-4">
+              <button
+                className="back-button p-2"
+                onClick={() => router.push("/")}
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <input
+                type="text"
+                placeholder="Nom du système"
+                className="bg-blue-700 rounded-md px-4 py-2 focus:outline-none"
+              />
+            </div>
+            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize">
+              {user?.username}
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "ml-4 w-10 h-10",
+                    userButtonAvatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </div>
+          </nav>
+        )}
+        <main
+          className={`${
+            isPresentationMode
+              ? "w-full h-full relative"
+              : "flex h-[calc(100vh-4rem)] overflow-hidden"
+          }`}
+        >
+          {!isPresentationMode && (
+            <div className="bg-blue-800 p-4 text-white w-1/4 overflow-y-auto overflow-x-hidden">
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Actions :</h3>
+                  <div className="space-y-2">
                     <ActionButton
-                      onClick={handleBasketballClick}
+                      onClick={() => setSelectingPlayerForArrow(true)}
                       disabled={isCourtEmpty}
-                      icon={<TfiBasketball size={28} />}
-                      title="Placer le ballon"
-                      description="Cliquez pour placer le ballon sur un joueur"
-                      isActive={selectingPlayerForBall}
+                      icon={<ArrowRight size={28} />}
+                      title="Ajouter une flèche"
+                      description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
+                      isActive={selectingPlayerForArrow}
                     />
-                  )}
-                  <ActionButton
-                    onClick={handleUndo}
-                    disabled={isCourtEmpty}
-                    icon={<GrReturn size={28} />}
-                    title="Annuler la dernière action"
-                    description="Cliquez pour annuler la dernière action effectuée"
-                  />
-                  <ActionButton
-                    onClick={handleValidateMovement}
-                    disabled={arrows.length === 0 && dottedArrows.length === 0}
-                    icon={<Check size={28} />}
-                    title="Valider le mouvement"
-                    description="Cliquez pour ajouter la séquence à la timeline"
-                  />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
-                <div className="space-y-2">
-                  {timeline.map((sequence, index) => (
-                    <div key={sequence.id} className="bg-blue-700 p-2 rounded">
-                      <div>Séquence {index + 1}</div>
-                      <input
-                        type="text"
-                        value={sequence.comment}
-                        onChange={(e) => {
-                          const newTimeline = [...timeline];
-                          newTimeline[index].comment = e.target.value;
-                          setTimeline(newTimeline);
-                        }}
-                        className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
-                        placeholder="Ajouter un commentaire pour cette séquence..."
+                    <ActionButton
+                      onClick={handleDottedArrowClick}
+                      disabled={!ballPosition}
+                      icon={<CgBorderStyleDotted size={28} />}
+                      title="Ajouter une flèche en pointillés"
+                      description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
+                      isActive={selectingDottedArrow}
+                    />
+                    {!ballPosition && (
+                      <ActionButton
+                        onClick={handleBasketballClick}
+                        disabled={isCourtEmpty}
+                        icon={<TfiBasketball size={28} />}
+                        title="Placer le ballon"
+                        description="Cliquez pour placer le ballon sur un joueur"
+                        isActive={selectingPlayerForBall}
                       />
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Équipe 1 :</h3>
-                <div className="flex flex-wrap gap-2">
-                  {team1Players.map((num) => (
-                    <PlayerButton
-                      key={num}
-                      num={num}
-                      team="team1"
-                      onDrop={() => handlePlayerDrop(num, "team1")}
-                      isOnCourt={playersOnCourt.some(
-                        (player) =>
-                          player.num === num && player.team === "team1"
-                      )}
+                    )}
+                    <ActionButton
+                      onClick={handleUndo}
+                      disabled={isCourtEmpty}
+                      icon={<GrReturn size={28} />}
+                      title="Annuler la dernière action"
+                      description="Cliquez pour annuler la dernière action effectuée"
                     />
-                  ))}
-                </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Équipe 2 :</h3>
-                <div className="flex flex-wrap gap-2">
-                  {team2Players.map((num) => (
-                    <PlayerButton
-                      key={num}
-                      num={num}
-                      team="team2"
-                      onDrop={() => handlePlayerDrop(num, "team2")}
-                      isOnCourt={playersOnCourt.some(
-                        (player) =>
-                          player.num === num && player.team === "team2"
-                      )}
+                    <ActionButton
+                      onClick={handleValidateMovement}
+                      disabled={
+                        arrows.length === 0 && dottedArrows.length === 0
+                      }
+                      icon={<Check size={28} />}
+                      title="Valider le mouvement"
+                      description="Cliquez pour ajouter la séquence à la timeline"
                     />
-                  ))}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Animation :</h3>
-                <div className="space-y-2">
-                  <ActionButton
-                    onClick={playTimeline}
-                    disabled={timeline.length === 0 || isPlayingTimeline}
-                    icon={<Play size={28} />}
-                    title="Jouer la timeline"
-                    description="Cliquez pour jouer toutes les séquences d'animation"
-                  />
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
+                  <div className="space-y-2">
+                    {timeline.map((sequence, index) => (
+                      <div key={index} className="bg-blue-700 p-2 rounded">
+                        <div>Séquence {index + 1}</div>
+                        <input
+                          type="text"
+                          value={sequence.comment}
+                          onChange={(e) => {
+                            const newTimeline = [...timeline];
+                            newTimeline[index].comment = e.target.value;
+                            setTimeline(newTimeline);
+                          }}
+                          className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
+                          placeholder="Ajouter un commentaire pour cette séquence..."
+                        />
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
-              <div>
-                <h3 className="text-xl font-semibold mb-4">Instructions :</h3>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>Les joueurs bleus sont votre équipe.</li>
-                  <li>Les joueurs rouges sont l'équipe adverse.</li>
-                  <li>
-                    Vous ne pouvez faire des passes qu'entre les joueurs bleus.
-                  </li>
-                  <li>Utilisez les flèches pleines pour les déplacements.</li>
-                  <li>Utilisez les flèches en pointillés pour les passes.</li>
-                </ul>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Équipe 1 :</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {team1Players.map((num) => (
+                      <PlayerButton
+                        key={num}
+                        num={num}
+                        team="team1"
+                        onDrop={() => handlePlayerDrop(num, "team1")}
+                        isOnCourt={playersOnCourt.some(
+                          (player) =>
+                            player.num === num && player.team === "team1"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Équipe 2 :</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {team2Players.map((num) => (
+                      <PlayerButton
+                        key={num}
+                        num={num}
+                        team="team2"
+                        onDrop={() => handlePlayerDrop(num, "team2")}
+                        isOnCourt={playersOnCourt.some(
+                          (player) =>
+                            player.num === num && player.team === "team2"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Animation :</h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={playTimeline}
+                      disabled={timeline.length === 0 || isPlayingTimeline}
+                      icon={<Play size={28} />}
+                      title="Jouer la timeline"
+                      description="Cliquez pour jouer toutes les séquences d'animation"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Plein écran et enregistrement :
+                  </h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={togglePresentationMode}
+                      icon={<Maximize size={28} />}
+                      title="Mode présentation"
+                      description="Passer en mode présentation pour l'enregistrement"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Instructions :</h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li>Les joueurs bleus sont votre équipe.</li>
+                    <li>Les joueurs rouges sont l'équipe adverse.</li>
+                    <li>
+                      Vous ne pouvez faire des passes qu'entre les joueurs
+                      bleus.
+                    </li>
+                    <li>Utilisez les flèches pleines pour les déplacements.</li>
+                    <li>Utilisez les flèches en pointillés pour les passes.</li>
+                  </ul>
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="flex-1 bg-gray-100 p-2">
+          )}
+          <div
+            className={`${
+              isPresentationMode ? "w-full h-full" : "flex-1 bg-gray-100 p-2"
+            }`}
+            ref={courtRef}
+          >
             <Court
               players={playersOnCourt}
               setPlayers={setPlayersOnCourt}
@@ -860,7 +963,42 @@ const CreateSystem: React.FC = () => {
               isPlayingTimeline={isPlayingTimeline}
             />
           </div>
+          {isPresentationMode && (
+            <div className="absolute top-4 left-4 flex space-x-4">
+              {!isRecording ? (
+                <ActionButton
+                  onClick={startRecording}
+                  icon={<Video size={28} />}
+                  title="Démarrer l'enregistrement"
+                  description="Cliquez pour commencer à enregistrer votre système en vidéo"
+                />
+              ) : (
+                <ActionButton
+                  onClick={stopRecording}
+                  icon={<StopCircle size={28} />}
+                  title="Arrêter l'enregistrement"
+                  description="Cliquez pour arrêter l'enregistrement et télécharger la vidéo"
+                  isActive={true}
+                />
+              )}
+              <ActionButton
+                onClick={playTimeline}
+                disabled={timeline.length === 0 || isPlayingTimeline}
+                icon={<Play size={28} />}
+                title="Jouer la timeline"
+                description="Cliquez pour jouer toutes les séquences d'animation"
+              />
+            </div>
+          )}
         </main>
+        {isPresentationMode && (
+          <button
+            className="absolute top-4 right-4 bg-blue-500 text-white p-2 rounded"
+            onClick={togglePresentationMode}
+          >
+            <Minimize size={20} />
+          </button>
+        )}
       </div>
     </DndProviderWithNoSSR>
   );
