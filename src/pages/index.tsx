@@ -30,7 +30,7 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 1 }}
         >
-          Le nouveau moyen de créer et d'expliquer ses tactiques
+          Le nouveau moyen de créer et d&apos;expliquer ses tactiques
         </motion.h1>
         <motion.p
           className="text-white text-lg max-w-2xl mb-8"
@@ -50,7 +50,7 @@ export default function Home() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Accéder à l'app
+                Accéder à l&apos;app
               </motion.button>
             </Link>
           ) : (
@@ -60,7 +60,7 @@ export default function Home() {
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
               >
-                Accéder à l'app
+                Accéder à l&apos;app
               </motion.button>
             </SignInButton>
           )}
@@ -132,8 +132,8 @@ export default function Home() {
               <p>
                 Il va falloir penser à préparer les textes, ils doivent être pas
                 mal long quand même, on les fera avec got plus que juju paye
-                t'in il est sympatoche et j pense ils ira jla, ya les img à
-                changer aussi mais sinon c'est good
+                t&apos;in il est sympatoche et j pense ils ira jla, ya les img à
+                changer aussi mais sinon c&apos;est good
               </p>
             </motion.div>
             <motion.div
@@ -156,8 +156,8 @@ export default function Home() {
               <p>
                 Il va falloir penser à préparer les textes, ils doivent être pas
                 mal long quand même, on les fera avec got plus que juju paye
-                t'in il est sympatoche et j pense ils ira, ya les img à changer
-                aussi mais sinon c'est good
+                t&apos;in il est sympatoche et j pense ils ira, ya les img à changer
+                aussi mais sinon c&apos;est good
               </p>
             </motion.div>
             <motion.div
@@ -169,20 +169,20 @@ export default function Home() {
                   <div className="p-3">
                     <Image
                       src="/img/Icon3.png"
-                      alt="Icone de créateur d'animations"
+                      alt="Icone de créateur d&apos;animations"
                       width={120}
                       height={120}
                     />
                   </div>
                   <h3 className="text-2xl font-bold ml-4">
-                    Créateur d'animations
+                    Créateur d&apos;animations
                   </h3>
                 </div>
                 <p className="mt-4 w-9/12 m-12">
                   Il va falloir penser à préparer les textes, ils doivent être
                   pas mal long quand même, on les fera avec got plus que juju
-                  paye t'in il est sympatoche et j pense ils ira, ya les img à
-                  changer aussi mais sinon c'est good
+                  paye t&apos;in il est sympatoche et j pense ils ira, ya les img à
+                  changer aussi mais sinon c&apos;est good
                 </p>
               </div>
               <div className="ml-32">

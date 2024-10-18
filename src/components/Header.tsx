@@ -54,7 +54,7 @@ export default function Header(): JSX.Element {
           ) : (
             <SignInButton mode="modal">
               <button className="hidden md:inline-block px-6 py-2 text-black bg-white rounded-full hover:bg-gray-100">
-                Accéder à l'app
+                Accéder à l&apos;app
               </button>
             </SignInButton>
           )}
