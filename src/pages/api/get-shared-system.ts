@@ -1,6 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-
-const fetch = require("node-fetch");
+import fetch from "node-fetch";
 
 const blobUrlTemplate =
   "https://em4avskip3gjifsk.public.blob.vercel-storage.com/shared-systems/";
