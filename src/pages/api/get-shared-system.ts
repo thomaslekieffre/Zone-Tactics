@@ -1,7 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import fs from "fs";
-import path from "path";
-import { head } from "@vercel/blob";
 
 const fetch = require("node-fetch");
 
