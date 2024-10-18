@@ -11,6 +11,7 @@
   "dependencies": {
     "@clerk/nextjs": "^5.7.2",
     "@types/recordrtc": "^5.6.14",
+    "@vercel/blob": "^0.25.1",
     "framer-motion": "^11.11.7",
     "next": "14.2.14",
     "react": "^18",

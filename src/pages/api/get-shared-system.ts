@@ -1,31 +1,35 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import fs from "fs";
 import path from "path";
+import { head } from "@vercel/blob";
 
-const STORAGE_FILE = path.join(process.cwd(), "shared-systems.json");
+const fetch = require("node-fetch");
 
-export default function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method === "GET") {
-    try {
-      const { id } = req.query;
-      if (!id || typeof id !== "string") {
-        return res.status(400).json({ error: "ID invalide" });
-      }
+const blobUrlTemplate =
+  "https://em4avskip3gjifsk.public.blob.vercel-storage.com/shared-systems/";
 
-      if (fs.existsSync(STORAGE_FILE)) {
-        const data = fs.readFileSync(STORAGE_FILE, "utf8");
-        const sharedSystems = JSON.parse(data);
-        if (sharedSystems[id]) {
-          return res.status(200).json(sharedSystems[id]);
-        }
-      }
+async function getJsonFile(req: NextApiRequest, res: NextApiResponse) {
+  try {
+    const { id } = req.query;
+    let blobUrl: string = "";
 
-      res.status(404).json({ error: "Système non trouvé" });
-    } catch (error) {
-      console.error("Erreur lors de la récupération du système:", error);
-      res.status(500).json({ error: "Erreur interne du serveur" });
+    if (!id || typeof id !== "string") {
+      res.status(404);
+    } else {
+      blobUrl = blobUrlTemplate + id + ".json";
     }
-  } else {
-    res.status(405).end(); // Method Not Allowed
+    console.log(blobUrl);
+    const response = await fetch(blobUrl);
+    http: if (!response.ok) {
+      throw new Error(`Failed to fetch file: ${response.status}`);
+    }
+
+    const jsonData = await response.json();
+
+    return res.status(200).json(jsonData);
+  } catch (error) {
+    console.error("Error fetching JSON file:", error);
   }
 }
+
+export default getJsonFile;
