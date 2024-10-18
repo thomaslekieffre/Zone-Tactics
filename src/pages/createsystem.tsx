@@ -23,6 +23,7 @@ import dynamic from "next/dynamic";
 import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
+import { url } from "inspector";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -952,8 +953,18 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       });
 
       if (response.ok) {
-        const { id } = await response.json();
-        const link = `${window.location.origin}/shared-system/${id}`;
+        const { id, url } = await response.json();
+        let idUrl: string = "";
+        const regex = /shared-systems\/([a-zA-Z0-9-]+)\.json/;
+        const match = url.match(regex);
+
+        if (match && match[1]) {
+          idUrl = match[1];
+          console.log(idUrl);
+        } else {
+          console.error("ID non trouvé dans l'URL.");
+        }
+        const link = `${window.location.origin}/shared-system/${idUrl}`;
         setShareLink(link);
       } else {
         alert("Erreur lors de la génération du lien de partage.");
