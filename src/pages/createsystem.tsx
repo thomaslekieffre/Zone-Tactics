@@ -1192,9 +1192,9 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                   <h3 className="text-xl font-semibold mb-4">Instructions :</h3>
                   <ul className="list-disc pl-5 space-y-2">
                     <li>Les joueurs bleus sont votre équipe.</li>
-                    <li>Les joueurs rouges sont l'équipe adverse.</li>
+                    <li>Les joueurs rouges sont l&apos;équipe adverse.</li>
                     <li>
-                      Vous ne pouvez faire des passes qu'entre les joueurs
+                      Vous ne pouvez faire des passes qu&apos;entre les joueurs
                       bleus.
                     </li>
                     <li>Utilisez les flèches pleines pour les déplacements.</li>
