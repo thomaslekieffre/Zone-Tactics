@@ -22,7 +22,7 @@ export default async function handler(
       const id = uuidv4();
 
       const { url } = await put(
-        `shared-systems/${id}.json`,
+        `user-systems/${userId}/${id}.json`,
         JSON.stringify(systemData),
         {
           access: "public",
@@ -30,7 +30,7 @@ export default async function handler(
       );
 
       console.log(`Système sauvegardé avec l'ID: ${id}`);
-      res.status(200).json({ id, url });
+      res.status(200).json({ id, url, userId });
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du système:", error);
       res.status(500).json({ error: "Erreur interne du serveur" });

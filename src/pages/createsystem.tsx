@@ -967,19 +967,31 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         body: JSON.stringify(systemData),
       });
 
+
+
       if (response.ok) {
-        const { id, url } = await response.json();
-        const link = `${window.location.origin}/shared-system/${id}`;
+        const { id, url, userId } = await response.json();
+        let idUrl: string = "";
+        const regex = /user-systems\/[^\/]+\/([a-zA-Z0-9-]+)\.json/;
+        const match = url.match(regex);
+
+        if (match && match[1]) {
+          idUrl = match[1];
+          console.log(idUrl);
+        } else {
+          console.error("ID non trouvé dans l'URL.");
+        }
+        const link = `${window.location.origin}/shared-system/${userId}.${idUrl}`;
         setShareLink(link);
 
         // Sauvegarder également dans la bibliothèque de l'utilisateur
-        await fetch("/api/save-system", {
+        /* await fetch("/api/save-system", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ ...systemData, id }),
-        });
+        }); */
 
         alert("Système partagé et ajouté à votre bibliothèque !");
       } else {

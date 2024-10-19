@@ -2,18 +2,20 @@ import { NextApiRequest, NextApiResponse } from "next";
 import fetch from "node-fetch";
 
 const blobUrlTemplate =
-  "https://em4avskip3gjifsk.public.blob.vercel-storage.com/shared-systems/";
+  "https://em4avskip3gjifsk.public.blob.vercel-storage.com/user-systems/";
 
 async function getJsonFile(req: NextApiRequest, res: NextApiResponse) {
   try {
     const { id } = req.query;
+    console.log(req.query);
     let blobUrl: string = "";
 
     if (!id || typeof id !== "string") {
       res.status(404);
     } else {
-      blobUrl = blobUrlTemplate + id + ".json";
+      blobUrl = blobUrlTemplate + id.split('.')[0] + '/' + id.split('.')[1] + ".json";
     }
+    console.log('ici')
     console.log(blobUrl);
     const response = await fetch(blobUrl);
     http: if (!response.ok) {
