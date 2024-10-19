@@ -41,7 +41,7 @@ export type LocalAnimationSequence = {
     endY: number;
   };
   comment: string;
-  audioComment?: string; // URL de l'audio enregistré
+  audioComment?: string;
 };
 
 type CreateSystemProps = {
@@ -932,6 +932,20 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   };
 
   const generateShareLink = async () => {
+    // Vérification des conditions de partage
+    if (playersOnCourt.length === 0) {
+      alert("Tous les joueurs doivent être sur le terrain.");
+      return;
+    }
+    if (!ballPosition) {
+      alert("Le ballon doit être présent.");
+      return;
+    }
+    if (timeline.length === 0) {
+      alert("Il doit y avoir au moins une séquence dans la timeline.");
+      return;
+    }
+
     if (!systemName.trim()) {
       alert("Veuillez donner un nom à votre système avant de le partager.");
       return;
@@ -1219,7 +1233,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                       onClick={generateShareLink}
                       icon={<Share2 size={28} />}
                       title="Générer un lien de partage"
-                      description="Créez un lien pour partager votre syst��me avec d'autres personnes"
+                      description="Créez un lien pour partager votre système avec d'autres personnes"
                     />
                     {shareLink && (
                       <div className="mt-2">
