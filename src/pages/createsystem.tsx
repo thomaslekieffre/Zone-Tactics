@@ -14,6 +14,7 @@ import {
   MicOff,
   Trash2,
   Share2,
+  BookOpen,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -968,18 +969,19 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
       if (response.ok) {
         const { id, url } = await response.json();
-        let idUrl: string = "";
-        const regex = /shared-systems\/([a-zA-Z0-9-]+)\.json/;
-        const match = url.match(regex);
-
-        if (match && match[1]) {
-          idUrl = match[1];
-          console.log(idUrl);
-        } else {
-          console.error("ID non trouvé dans l'URL.");
-        }
-        const link = `${window.location.origin}/shared-system/${idUrl}`;
+        const link = `${window.location.origin}/shared-system/${id}`;
         setShareLink(link);
+
+        // Sauvegarder également dans la bibliothèque de l'utilisateur
+        await fetch("/api/save-system", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ ...systemData, id }),
+        });
+
+        alert("Système partagé et ajouté à votre bibliothèque !");
       } else {
         alert("Erreur lors de la génération du lien de partage.");
       }
@@ -996,6 +998,10 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         .then(() => alert("Lien copié dans le presse-papiers !"))
         .catch((err) => console.error("Erreur lors de la copie du lien:", err));
     }
+  };
+
+  const goToLibrary = () => {
+    router.push("/library");
   };
 
   return (
@@ -1093,6 +1099,12 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                       icon={<Check size={28} />}
                       title="Valider le mouvement"
                       description="Cliquez pour ajouter la séquence à la timeline"
+                    />
+                    <ActionButton
+                      onClick={goToLibrary}
+                      icon={<BookOpen size={28} />}
+                      title="Ma Bibliothèque"
+                      description="Voir tous mes systèmes sauvegardés"
                     />
                   </div>
                 </div>
@@ -1374,7 +1386,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         )}
         {isPresentationMode && (
           <button
-            className="absolute top-4 right-4 bg-blue-500 text-white p-2 rounded"
+            className="absolute top-4 right-4 bg-blue-500 text-te p-2 rounded"
             onClick={togglePresentationMode}
           >
             <Minimize size={20} />
