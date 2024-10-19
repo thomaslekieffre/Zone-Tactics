@@ -7,7 +7,6 @@ export default async function handler(
   res: NextApiResponse
 ) {
   const { userId } = getAuth(req);
-
   if (!userId) {
     return res.status(401).json({ error: "Non autorisé" });
   }
@@ -19,10 +18,13 @@ export default async function handler(
 
     const systems = await Promise.all(
       blobs.map(async (blob) => {
+        console.log(blob);
         const response = await fetch(blob.url);
         const systemData = await response.json();
+        const id = blob.url.split("/")[4] + "." + blob.url.split("/")[5];
+        console.log('user-systems/' + id.replace('.json', ''));
         return {
-          id: blob.pathname.split("/").pop()?.replace(".json", ""),
+          id: id.replace('.json', ''),
           name: systemData.name,
           createdAt: blob.uploadedAt,
         };

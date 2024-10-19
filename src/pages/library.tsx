@@ -35,6 +35,8 @@ export default function Library() {
   };
 
   const viewSystem = (id: string) => {
+    console.log('ici')
+    console.log(id)
     router.push(`/shared-system/${id}`);
   };
 
