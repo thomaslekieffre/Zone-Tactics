@@ -2,7 +2,7 @@ import { useRouter } from "next/router";
 import { useEffect, useState } from "react";
 import CreateSystem, { LocalAnimationSequence } from "../createsystem";
 
-interface SystemData {
+type SystemData = {
   name: string;
   timeline: LocalAnimationSequence[];
   playersOnCourt: {
@@ -12,41 +12,23 @@ interface SystemData {
     x: number;
     y: number;
   }[];
-}
+};
 
 const SharedSystem = () => {
   const router = useRouter();
   const { id } = router.query;
   const [systemData, setSystemData] = useState<SystemData | null>(null);
-  const [error, setError] = useState(null);
 
   useEffect(() => {
     if (id) {
       fetch(`/api/get-shared-system?id=${id}`)
-        .then(async (response) => {
-          if (!response.ok) {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Erreur inconnue");
-          }
-          return response.json();
-        })
-        .then((data) => {
-          console.log("Données du système reçues:", data);
-          setSystemData(data);
-        })
-        .catch((error) => {
-          console.error(
-            "Erreur lors de la récupération du système partagé:",
-            error
-          );
-          setError(error.message);
-        });
+        .then((response) => response.json())
+        .then((data: SystemData) => setSystemData(data))
+        .catch((error) =>
+          console.error("Erreur lors de la récupération du système:", error)
+        );
     }
   }, [id]);
-
-  if (error) {
-    return <div>Erreur : {error}</div>;
-  }
 
   if (!systemData) {
     return <div>Chargement...</div>;

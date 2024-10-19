@@ -1,5 +1,4 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import { v4 as uuidv4 } from "uuid";
 import { put } from "@vercel/blob";
 import { getAuth } from "@clerk/nextjs/server";
 
@@ -15,21 +14,19 @@ export default async function handler(
 
   if (req.method === "POST") {
     try {
-      const systemData = req.body;
+      const { id, ...systemData } = req.body;
       if (!systemData.name) {
         return res.status(400).json({ error: "Le nom du système est requis" });
       }
-      const id = uuidv4();
 
       const { url } = await put(
-        `shared-systems/${id}.json`,
+        `user-systems/${userId}/${id}.json`,
         JSON.stringify(systemData),
         {
           access: "public",
         }
       );
 
-      console.log(`Système sauvegardé avec l'ID: ${id}`);
       res.status(200).json({ id, url });
     } catch (error) {
       console.error("Erreur lors de la sauvegarde du système:", error);
