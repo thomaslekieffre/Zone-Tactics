@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/router";
 import { Eye, ArrowLeft } from "react-feather";
+import { withPremiumAccess } from "@/components/withSubscription";
 
 type System = {
   id: string;
@@ -9,7 +10,7 @@ type System = {
   createdAt: string;
 };
 
-export default function Library() {
+export default withPremiumAccess(function Library() {
   const [systems, setSystems] = useState<System[]>([]);
   const { user } = useUser();
   const router = useRouter();
@@ -35,8 +36,8 @@ export default function Library() {
   };
 
   const viewSystem = (id: string) => {
-    console.log('ici')
-    console.log(id)
+    console.log("ici");
+    console.log(id);
     router.push(`/shared-system/${id}`);
   };
 
@@ -87,4 +88,4 @@ export default function Library() {
       </div>
     </div>
   );
-}
+});

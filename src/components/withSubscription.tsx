@@ -1,10 +1,10 @@
 import { useRouter } from "next/router";
-import { useSubscription } from "../hooks/useSubscription";
+import { useSubscription } from "@/hooks/useSubscription";
 
-export function withSubscription<P extends object>(
+export function withPremiumAccess<P extends object>(
   WrappedComponent: React.ComponentType<P>
 ) {
-  return function WithSubscriptionComponent(props: P) {
+  return function WithPremiumAccessComponent(props: P) {
     const subscriptionStatus = useSubscription();
     const router = useRouter();
 

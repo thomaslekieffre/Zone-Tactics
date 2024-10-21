@@ -4,7 +4,11 @@ import "../styles/globals.css";
 
 function MyApp({ Component, pageProps }: AppProps) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      {...pageProps}
+      appearance={{}}
+      cookieDomain={process.env.NEXT_PUBLIC_CLERK_COOKIE_DOMAIN || undefined}
+    >
       <Component {...pageProps} />
     </ClerkProvider>
   );
