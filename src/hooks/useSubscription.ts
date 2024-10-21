@@ -8,30 +8,31 @@ export function useSubscription() {
   const [status, setStatus] = useState<SubscriptionStatus>("loading");
 
   useEffect(() => {
-    let isMounted = true;
-
     const checkSubscription = async () => {
-      setStatus("loading");
       if (isSignedIn && user) {
         try {
           const response = await fetch(
             `/api/check-subscription?userId=${user.id}`
           );
+          if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+          }
           const data = await response.json();
-          if (isMounted) setStatus(data.status);
+          console.log("Statut d'abonnement reçu:", data.status);
+          setStatus(data.status);
         } catch (error) {
-          if (isMounted) setStatus("inactive");
+          console.error(
+            "Erreur lors de la vérification de l'abonnement:",
+            error
+          );
+          setStatus("inactive");
         }
       } else {
-        if (isMounted) setStatus("inactive");
+        setStatus("inactive");
       }
     };
 
     checkSubscription();
-
-    return () => {
-      isMounted = false;
-    };
   }, [isSignedIn, user]);
 
   return status;
