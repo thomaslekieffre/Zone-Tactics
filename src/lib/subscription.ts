@@ -4,17 +4,26 @@ export async function getSubscriptionStatus(
   userId: string
 ): Promise<"active" | "inactive"> {
   try {
-    console.log(`Vérification de l'abonnement pour l'utilisateur: ${userId}`);
-    const { blobs } = await list({ prefix: `subscriptions/${userId}.json` });
+    console.log(`Début de la vérification pour l'utilisateur: ${userId}`);
+    const { blobs } = await list();
 
-    console.log("Blobs trouvés:", blobs);
+    console.log(
+      "Tous les blobs trouvés:",
+      blobs.map((b) => b.pathname)
+    );
 
-    if (blobs.length === 0) {
-      console.log(`Aucun abonnement trouvé pour l'utilisateur ${userId}`);
+    const userBlob = blobs.find((blob) =>
+      blob.pathname.startsWith(`subscriptions/${userId}`)
+    );
+
+    if (!userBlob) {
+      console.log(`Aucun blob trouvé pour l'utilisateur ${userId}`);
       return "inactive";
     }
 
-    const response = await fetch(blobs[0].url);
+    console.log(`Blob trouvé pour l'utilisateur ${userId}:`, userBlob);
+
+    const response = await fetch(userBlob.url);
     if (!response.ok) {
       throw new Error(`Erreur HTTP! statut: ${response.status}`);
     }
