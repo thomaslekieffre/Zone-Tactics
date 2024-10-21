@@ -14,7 +14,7 @@ export default function Pricing() {
   const { isSignedIn, user } = useUser();
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubscription = async () => {
+  const handleSubscription = async (priceId: string) => {
     setIsLoading(true);
     try {
       const response = await fetch("/api/create-checkout-session", {
@@ -23,19 +23,22 @@ export default function Pricing() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          priceId: STRIPE_PLAN.price,
-          userId: user?.id,
+          priceId,
         }),
       });
 
       const session = await response.json();
       const stripe = await stripePromise;
-      await stripe!.redirectToCheckout({
+      const { error } = await stripe!.redirectToCheckout({
         sessionId: session.id,
       });
+
+      if (error) {
+        console.error("Error:", error);
+        setIsLoading(false);
+      }
     } catch (error) {
       console.error("Error:", error);
-    } finally {
       setIsLoading(false);
     }
   };
@@ -66,7 +69,7 @@ export default function Pricing() {
             })}
           </ul>
           <button
-            onClick={handleSubscription}
+            onClick={() => handleSubscription(STRIPE_PLAN.price)}
             disabled={!isSignedIn || isLoading}
             className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 transition duration-300 disabled:opacity-50 text-lg font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-800"
           >
