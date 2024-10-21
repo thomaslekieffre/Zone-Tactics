@@ -1,16 +1,20 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSubscriptionStatus } from "@/lib/subscription";
+import { getAuth } from "@clerk/nextjs/server";
 
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse
 ) {
   if (req.method === "GET") {
-    const { userId } = req.query;
+    const { userId } = getAuth(req);
 
-    if (!userId || typeof userId !== "string") {
+    if (!userId) {
+      console.error("UserId non trouvé dans la requête");
       return res.status(400).json({ error: "UserId invalide" });
     }
+
+    console.log("UserId reçu:", userId);
 
     try {
       const status = await getSubscriptionStatus(userId);
