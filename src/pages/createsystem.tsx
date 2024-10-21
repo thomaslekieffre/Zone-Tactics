@@ -25,6 +25,8 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 import { url } from "inspector";
+import { useSubscription } from "./hooks/useSubscription";
+import { withSubscription } from "@/components/withSubscription";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -372,6 +374,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   readOnly = false,
   systemName: initialSystemName = "",
 }) => {
+  const subscriptionStatus = useSubscription();
   const { user } = useUser();
   const router = useRouter();
   const [systemName, setSystemName] = useState(initialSystemName);
@@ -446,12 +449,10 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     let width, height;
 
     if (containerAspectRatio > COURT_ASPECT_RATIO) {
-      // Le conteneur est plus large que le terrain
-      height = containerHeight * 0.95; // 95% de la hauteur du conteneur
+      height = containerHeight * 0.95;
       width = height * COURT_ASPECT_RATIO;
     } else {
-      // Le conteneur est plus haut que le terrain
-      width = containerWidth * 0.95; // 95% de la largeur du conteneur
+      width = containerWidth * 0.95;
       height = width / COURT_ASPECT_RATIO;
     }
 
@@ -488,7 +489,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     };
 
     window.addEventListener("resize", handleResize);
-    handleResize(); // Appel initial
+    handleResize();
 
     return () => window.removeEventListener("resize", handleResize);
   }, []);
@@ -502,13 +503,11 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       console.log("Données initiales reçues:", initialData);
       setTimeline(initialData.timeline);
       setPlayersOnCourt(initialData.playersOnCourt);
-      // Autres initialisations...
     }
   }, [initialData]);
 
   const togglePresentationMode = () => {
     setIsPresentationMode(!isPresentationMode);
-    // Nous utilisons un setTimeout pour laisser le temps au DOM de se mettre à jour
     setTimeout(updateCourtSize, 0);
   };
 
@@ -583,7 +582,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const handlePlayerClick = (player: any) => {
     if (selectingPlayerForBall) {
       if (player.team === "team1") {
-        const ballX = player.x + 22; // Ajustez cette valeur si nécessaire
+        const ballX = player.x + 22;
         const ballY = player.y;
         setBallPosition({ x: ballX, y: ballY });
         setSelectingPlayerForBall(false);
@@ -620,7 +619,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         distance: number;
       }>(
         (nearest, player) => {
-          if (player.team !== "team1") return nearest; // Ignorer les joueurs qui ne sont pas de l'équipe 1 (bleus)
+          if (player.team !== "team1") return nearest;
           const distance = Math.sqrt(
             Math.pow(player.x - position.x, 2) +
               Math.pow(player.y - position.y, 2)
@@ -707,7 +706,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       targetY: number;
     } | null = null;
 
-    // Trouver le joueur qui a le ballon
     const playerWithBall = ballPosition
       ? playersOnCourt.find(
           (player) =>
@@ -729,7 +727,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
           targetY: arrow.end.y,
         });
 
-        // Si ce joueur a le ballon, préparer l'animation du ballon
         if (playerWithBall && playerWithBall.id === playerToMove.id) {
           ballToAnimate = {
             ...ballPosition!,
@@ -740,7 +737,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       }
     });
 
-    // Gérer les passes (flèches en pointillés)
     if (dottedArrows.length > 0 && ballPosition) {
       const lastDottedArrow = dottedArrows[dottedArrows.length - 1];
       const ballReceiver = playersOnCourt.find(
@@ -782,8 +778,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
               endY: ballToAnimate.targetY,
             }
           : undefined,
-        comment: "", // Initialisez le commentaire comme une chaîne vide
-        audioComment: undefined, // Initialisez le commentaire audio comme undefined
+        comment: "",
+        audioComment: undefined,
       };
 
       setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
@@ -791,7 +787,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       setAnimatingPlayer(playersToAnimate);
       setIsAnimating(true);
 
-      // Animer les joueurs
       setTimeout(() => {
         setPlayersOnCourt((players) =>
           players.map((player) => {
@@ -808,7 +803,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
           })
         );
 
-        // Animer le ballon à la fin
         if (ballToAnimate) {
           setBallPosition({
             x: ballToAnimate.targetX,
@@ -828,7 +822,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     setIsPlayingTimeline(true);
     for (const sequence of timeline) {
       await new Promise<void>((resolve) => {
-        // Appliquer les changements de position initiale
         setPlayersOnCourt((prevPlayers) =>
           prevPlayers.map((player) => {
             const animatingPlayer = sequence.players.find(
@@ -848,7 +841,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         }
 
         setTimeout(() => {
-          // Appliquer les changements de position finale
           setPlayersOnCourt((prevPlayers) =>
             prevPlayers.map((player) => {
               const animatingPlayer = sequence.players.find(
@@ -877,8 +869,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     if (isAnimating) {
       const timer = setTimeout(() => {
         setIsAnimating(false);
-        setArrows((arrows) => arrows.slice(0, -1)); // Supprime la dernière flèche
-      }, 1000); // Durée de l'animation
+        setArrows((arrows) => arrows.slice(0, -1));
+      }, 1000);
 
       return () => clearTimeout(timer);
     }
@@ -933,7 +925,12 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   };
 
   const generateShareLink = async () => {
-    // Vérification des conditions de partage
+    if (subscriptionStatus !== "active") {
+      alert(
+        "Cette fonctionnalité est réservée aux abonnés premium. Veuillez vous abonner pour l'utiliser."
+      );
+      return;
+    }
     if (playersOnCourt.length === 0) {
       alert("Tous les joueurs doivent être sur le terrain.");
       return;
@@ -967,8 +964,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         body: JSON.stringify(systemData),
       });
 
-
-
       if (response.ok) {
         const { id, url, userId } = await response.json();
         let idUrl: string = "";
@@ -983,15 +978,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         }
         const link = `${window.location.origin}/shared-system/${userId}.${idUrl}`;
         setShareLink(link);
-
-        // Sauvegarder également dans la bibliothèque de l'utilisateur
-        /* await fetch("/api/save-system", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ ...systemData, id }),
-        }); */
 
         alert("Système partagé et ajouté à votre bibliothèque !");
       } else {
@@ -1409,4 +1395,4 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   );
 };
 
-export default CreateSystem;
+export default withSubscription(CreateSystem);

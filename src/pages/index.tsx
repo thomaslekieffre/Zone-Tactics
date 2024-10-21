@@ -44,33 +44,48 @@ export default function Home() {
         </motion.p>
         <motion.div className="space-x-4">
           {isSignedIn ? (
-            <Link href="/createsystem">
-              <motion.button
-                className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Accéder à l&apos;app
-              </motion.button>
-            </Link>
+            <>
+              <Link href="/createsystem">
+                <motion.button
+                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Accéder à l'app
+                </motion.button>
+              </Link>
+              <Link href="/pricing">
+                <motion.button
+                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Voir les abonnements
+                </motion.button>
+              </Link>
+            </>
           ) : (
-            <SignInButton mode="modal">
-              <motion.button
-                className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                Accéder à l&apos;app
-              </motion.button>
-            </SignInButton>
+            <>
+              <SignInButton mode="modal">
+                <motion.button
+                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Accéder à l'app
+                </motion.button>
+              </SignInButton>
+              <Link href="/pricing">
+                <motion.button
+                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  Voir les abonnements
+                </motion.button>
+              </Link>
+            </>
           )}
-          <motion.button
-            className="bg-transparent text-white border border-white py-2 px-4 rounded-full"
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Parler à un expert
-          </motion.button>
         </motion.div>
       </motion.div>
       <main className="flex flex-col items-center mt-10 flex-grow">
