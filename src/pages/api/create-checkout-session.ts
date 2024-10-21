@@ -1,5 +1,9 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import stripe from "@/lib/stripe";
+import Stripe from "stripe";
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+  apiVersion: "2024-09-30.acacia",
+});
 
 export default async function handler(
   req: NextApiRequest,
@@ -7,10 +11,9 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
-      const { priceId, userId } = req.body;
+      const { priceId } = req.body; // Assurez-vous de passer priceId depuis le client
 
       const session = await stripe.checkout.sessions.create({
-        mode: "subscription",
         payment_method_types: ["card"],
         line_items: [
           {
@@ -18,14 +21,15 @@ export default async function handler(
             quantity: 1,
           },
         ],
+        mode: "subscription",
         success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/pricing`,
-        client_reference_id: userId,
       });
 
       res.status(200).json({ id: session.id });
-    } catch (error) {
-      res.status(500).json({ error: "Error creating checkout session" });
+    } catch (error: any) {
+      console.error("Error creating checkout session:", error);
+      res.status(500).json({ statusCode: 500, message: error.message });
     }
   } else {
     res.setHeader("Allow", "POST");
