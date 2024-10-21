@@ -11,7 +11,12 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
+      console.log("Received request body:", req.body); // Ajoutez cette ligne
       const { priceId } = req.body; // Assurez-vous de passer priceId depuis le client
+
+      if (!priceId) {
+        throw new Error("Price ID is required");
+      }
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
@@ -26,6 +31,7 @@ export default async function handler(
         cancel_url: `${req.headers.origin}/pricing`,
       });
 
+      console.log("Created Stripe session:", session.id); // Ajoutez cette ligne
       res.status(200).json({ id: session.id });
     } catch (error: any) {
       console.error("Error creating checkout session:", error);
