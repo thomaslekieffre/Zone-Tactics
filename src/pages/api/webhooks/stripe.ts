@@ -88,7 +88,6 @@ export default async function handler(
               `Erreur lors de l'activation de l'abonnement:`,
               error
             );
-            // Vous pouvez choisir de renvoyer une réponse d'erreur ici si nécessaire
           }
         }
         break;
