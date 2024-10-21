@@ -1,10 +1,25 @@
+import { useEffect } from "react";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { useRouter } from "next/router";
 
 export default function Library() {
+  const router = useRouter();
   const subscriptionStatus = useSubscription();
   const { isSignedIn } = useUser();
+
+  useEffect(() => {
+    const handleRouteChange = () => {
+      router.replace(router.asPath);
+    };
+
+    router.events.on("routeChangeComplete", handleRouteChange);
+
+    return () => {
+      router.events.off("routeChangeComplete", handleRouteChange);
+    };
+  }, []);
 
   if (subscriptionStatus === "loading") {
     return (
@@ -58,12 +73,11 @@ export default function Library() {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <h1 className="text-3xl font-bold mb-6">Bibliothèque Premium</h1>
-      {/* Ajoutez ici le contenu de votre bibliothèque */}
       <p>
         Bienvenue dans votre bibliothèque premium. Profitez de tous les
         avantages !
       </p>
-      {/* Liste des éléments de la bibliothèque, fonctionnalités premium, etc. */}
+      {/* Ajoutez ici le contenu de votre bibliothèque */}
     </div>
   );
 }
