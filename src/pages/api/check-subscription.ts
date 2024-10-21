@@ -18,7 +18,7 @@ export default async function handler(
 
     try {
       const status = await getSubscriptionStatus(userId);
-      console.log(`Statut d'abonnement pour ${userId}:`, status);
+      console.log(`Statut d'abonnement final pour ${userId}:`, status);
       res.status(200).json({ status });
     } catch (error) {
       console.error("Erreur lors de la vérification de l'abonnement:", error);
