@@ -37,7 +37,7 @@ export default async function handler(
       if (session.client_reference_id && session.subscription) {
         try {
           await put(
-            `subscriptions/${session.client_reference_id}.json`,
+            `subscriptions/${session.client_reference_id}-${session.subscription}.json`,
             JSON.stringify({
               status: "active",
               subscriptionId: session.subscription,
