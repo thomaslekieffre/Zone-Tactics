@@ -46,7 +46,7 @@ export default function Success() {
             <p className="mb-4">Veuillez contacter notre support technique.</p>
             <Link href="/pricing">
               <a className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300">
-                Retour à la page d'abonnement
+                Retour à la page d&apos;abonnement
               </a>
             </Link>
           </div>
