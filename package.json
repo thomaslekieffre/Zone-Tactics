@@ -1,6 +1,6 @@
 {
   "name": "zone-tactics",
-  "version": "0.1.0",
+  "version": "0.8.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -10,9 +10,11 @@
   },
   "dependencies": {
     "@clerk/nextjs": "^5.7.2",
+    "@stripe/stripe-js": "^4.8.0",
     "@types/recordrtc": "^5.6.14",
     "@vercel/blob": "^0.25.1",
     "framer-motion": "^11.11.7",
+    "micro": "^10.0.1",
     "next": "14.2.14",
     "node-fetch": "^3.3.2",
     "react": "^18",
@@ -21,6 +23,7 @@
     "react-dom": "^18",
     "react-feather": "^2.0.10",
     "react-icons": "^5.3.0",
+    "stripe": "^17.2.1",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
