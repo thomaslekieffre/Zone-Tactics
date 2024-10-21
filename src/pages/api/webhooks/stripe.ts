@@ -56,32 +56,40 @@ export default async function handler(
   res: NextApiResponse
 ) {
   if (req.method === "POST") {
+    const buf = await buffer(req);
+    const sig = req.headers["stripe-signature"] as string;
+
     let event: Stripe.Event;
 
     try {
-      const buf = await buffer(req);
-      const sig = req.headers["stripe-signature"] as string;
-
-      event = stripe.webhooks.constructEvent(
-        buf,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET!
-      );
+      const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET!.trim();
+      event = stripe.webhooks.constructEvent(buf, sig, webhookSecret);
     } catch (err: any) {
       console.error(`Webhook Error: ${err.message}`);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
+      res.status(400).send(`Webhook Error: ${err.message}`);
+      return;
     }
 
-    // Gérer l'événement
     switch (event.type) {
       case "checkout.session.completed":
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.client_reference_id && session.subscription) {
-          await updateUserSubscription(
-            session.client_reference_id,
-            "active",
-            session.subscription as string
-          );
+          try {
+            await updateUserSubscription(
+              session.client_reference_id,
+              "active",
+              session.subscription as string
+            );
+            console.log(
+              `Abonnement activé pour l'utilisateur ${session.client_reference_id}`
+            );
+          } catch (error) {
+            console.error(
+              `Erreur lors de l'activation de l'abonnement:`,
+              error
+            );
+            // Vous pouvez choisir de renvoyer une réponse d'erreur ici si nécessaire
+          }
         }
         break;
       case "customer.subscription.updated":
@@ -96,13 +104,11 @@ export default async function handler(
         }
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+        console.log(`Événement non géré : ${event.type}`);
     }
 
-    // Renvoyer une réponse pour acquitter la réception de l'événement
     res.json({ received: true });
   } else {
-    // Si la méthode n'est pas POST, renvoyer une erreur 405
     res.setHeader("Allow", "POST");
     res.status(405).send("Method Not Allowed");
   }
