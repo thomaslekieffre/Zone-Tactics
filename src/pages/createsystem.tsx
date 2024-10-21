@@ -496,7 +496,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
   useEffect(() => {
     updateCourtSize();
-  }, [isPresentationMode]);
+  }, [isPresentationMode, updateCourtSize]);
 
   useEffect(() => {
     if (initialData) {
