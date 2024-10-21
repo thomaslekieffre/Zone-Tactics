@@ -1,5 +1,5 @@
 import { useRouter } from "next/router";
-import { useSubscription } from "../pages/hooks/useSubscription";
+import { useSubscription } from "../hooks/useSubscription";
 
 export function withSubscription<P extends object>(
   WrappedComponent: React.ComponentType<P>

@@ -25,7 +25,7 @@ import { UserButton, useUser } from "@clerk/nextjs";
 import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 import { url } from "inspector";
-import { useSubscription } from "./hooks/useSubscription";
+import { useSubscription } from "../hooks/useSubscription";
 import { withSubscription } from "@/components/withSubscription";
 
 export type LocalAnimationSequence = {
@@ -473,7 +473,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   useEffect(() => {
     setIsMounted(true);
     return () => setIsMounted(false);
-  }, []);
+  }, [setIsMounted]);
 
   useEffect(() => {
     if (isMounted) {
@@ -492,7 +492,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     handleResize();
 
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [updateCourtSize]);
 
   useEffect(() => {
     updateCourtSize();
