@@ -8,16 +8,30 @@ export function useSubscription() {
   const [status, setStatus] = useState<SubscriptionStatus>("loading");
 
   useEffect(() => {
-    if (isSignedIn && user) {
-      fetch(`/api/check-subscription?userId=${user.id}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setStatus(data.status);
-        })
-        .catch(() => setStatus("inactive"));
-    } else {
-      setStatus("inactive");
-    }
+    let isMounted = true;
+
+    const checkSubscription = async () => {
+      setStatus("loading");
+      if (isSignedIn && user) {
+        try {
+          const response = await fetch(
+            `/api/check-subscription?userId=${user.id}`
+          );
+          const data = await response.json();
+          if (isMounted) setStatus(data.status);
+        } catch (error) {
+          if (isMounted) setStatus("inactive");
+        }
+      } else {
+        if (isMounted) setStatus("inactive");
+      }
+    };
+
+    checkSubscription();
+
+    return () => {
+      isMounted = false;
+    };
   }, [isSignedIn, user]);
 
   return status;
