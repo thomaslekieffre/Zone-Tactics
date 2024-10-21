@@ -24,13 +24,23 @@ async function updateUserSubscription(
     updatedAt: new Date().toISOString(),
   });
 
-  await put(`subscriptions/${userId}.json`, subscriptionData, {
-    access: "public",
-  });
+  try {
+    const { url } = await put(
+      `subscriptions/${userId}.json`,
+      subscriptionData,
+      {
+        access: "public",
+      }
+    );
 
-  console.log(
-    `Mise à jour de l'abonnement pour l'utilisateur ${userId}: ${subscriptionStatus}`
-  );
+    console.log(
+      `Mise à jour de l'abonnement pour l'utilisateur ${userId}: ${subscriptionStatus}`
+    );
+    console.log(`URL du blob: ${url}`);
+  } catch (error) {
+    console.error("Erreur lors de la mise à jour de l'abonnement:", error);
+    throw error;
+  }
 }
 
 export default async function handler(
