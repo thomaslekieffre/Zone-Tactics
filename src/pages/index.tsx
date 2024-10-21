@@ -51,7 +51,7 @@ export default function Home() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  Accéder à l'app
+                  Accéder à l&apos;application
                 </motion.button>
               </Link>
               <Link href="/pricing">
@@ -72,7 +72,7 @@ export default function Home() {
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  Accéder à l'app
+                  Accéder à l&apos;application
                 </motion.button>
               </SignInButton>
               <Link href="/pricing">
@@ -97,7 +97,7 @@ export default function Home() {
         >
           <Image
             src="/img/screen1.png"
-            alt="Aperçu de l'app"
+            alt="Aperçu de l'application"
             width={800}
             height={400}
             className="rounded-lg"
