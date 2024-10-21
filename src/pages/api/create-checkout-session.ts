@@ -1,9 +1,5 @@
 import { NextApiRequest, NextApiResponse } from "next";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  apiVersion: "2024-09-30.acacia",
-});
+import stripe from "@/lib/stripe";
 
 export default async function handler(
   req: NextApiRequest,
@@ -11,30 +7,27 @@ export default async function handler(
 ) {
   if (req.method === "POST") {
     try {
-      console.log("Received request body:", req.body); // Ajoutez cette ligne
-      const { priceId } = req.body; // Assurez-vous de passer priceId depuis le client
+      const { priceId, userId } = req.body;
 
-      if (!priceId) {
-        throw new Error("Price ID is required");
+      if (!priceId || !userId) {
+        throw new Error("Price ID et User ID sont requis");
       }
 
       const session = await stripe.checkout.sessions.create({
         payment_method_types: ["card"],
-        line_items: [
-          {
-            price: priceId,
-            quantity: 1,
-          },
-        ],
+        line_items: [{ price: priceId, quantity: 1 }],
         mode: "subscription",
         success_url: `${req.headers.origin}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${req.headers.origin}/pricing`,
+        client_reference_id: userId,
       });
 
-      console.log("Created Stripe session:", session.id); // Ajoutez cette ligne
       res.status(200).json({ id: session.id });
     } catch (error: any) {
-      console.error("Error creating checkout session:", error);
+      console.error(
+        "Erreur lors de la création de la session de paiement:",
+        error
+      );
       res.status(500).json({ statusCode: 500, message: error.message });
     }
   } else {

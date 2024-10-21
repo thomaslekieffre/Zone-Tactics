@@ -17,37 +17,28 @@ export default function Pricing() {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubscription = async () => {
-    console.log("Sending priceId:", PLAN.price);
     setIsLoading(true);
     try {
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          priceId: PLAN.price,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId: PLAN.price, userId: user?.id }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error("Server error:", errorData);
         throw new Error(`HTTP error! status: ${response.status}`);
       }
 
-      const session = await response.json();
+      const { id: sessionId } = await response.json();
       const stripe = await stripePromise;
-      const { error } = await stripe!.redirectToCheckout({
-        sessionId: session.id,
-      });
+      const { error } = await stripe!.redirectToCheckout({ sessionId });
 
       if (error) {
-        console.error("Error:", error);
-        setIsLoading(false);
+        console.error("Erreur Stripe:", error);
       }
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Erreur:", error);
+    } finally {
       setIsLoading(false);
     }
   };
