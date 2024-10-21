@@ -1,7 +1,7 @@
 export const STRIPE_PLANS = {
   BASIC: {
     name: "Basic",
-    price: "price_1QCMRkGsj8271zCXdCEaqa41",
+    price: "price_1QCMRkGsj827lzCXdCEaqa41",
     features: [
       "Fonctionnalité 1",
       "Fonctionnalité 2",
