@@ -11,9 +11,7 @@ export function useSubscription() {
     const checkSubscription = async () => {
       if (isSignedIn && user) {
         try {
-          const response = await fetch(
-            `/api/check-subscription?userId=${user.id}`
-          );
+          const response = await fetch(`/api/check-subscription`);
           if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
           }

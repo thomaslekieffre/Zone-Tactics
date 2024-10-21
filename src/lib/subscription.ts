@@ -7,6 +7,8 @@ export async function getSubscriptionStatus(
     console.log(`Vérification de l'abonnement pour l'utilisateur: ${userId}`);
     const { blobs } = await list({ prefix: `subscriptions/${userId}.json` });
 
+    console.log("Blobs trouvés:", blobs);
+
     if (blobs.length === 0) {
       console.log(`Aucun abonnement trouvé pour l'utilisateur ${userId}`);
       return "inactive";
