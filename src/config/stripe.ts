@@ -1,10 +1,7 @@
-export const STRIPE_PLAN = {
-  name: "Abonnement Premium",
-  price: "price_1QCMRkGsj827lzCXdCEaqa41",
-  features: [
-    "Accès à toutes les fonctionnalités de l'application",
-    "Création illimitée de systèmes",
-    "Partage de systèmes",
-    "Support prioritaire",
-  ],
+export const STRIPE_PLANS = {
+  BASIC: {
+    name: "Basic",
+    price: "price_1QCMRkGsj8271zCXdCEaqa41",
+    features: ["Fonctionnalité 1", "Fonctionnalité 2", "Fonctionnalité 3"],
+  },
 };
