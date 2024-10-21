@@ -1,12 +1,11 @@
 export const STRIPE_PLANS = {
   BASIC: {
-    name: "Basic",
-    price: "price_1QCNKpGsj827lzCXSi0gg5xw",
+    name: "Zone-Tactics Premium",
+    price: "price_1QCMRkGsj827lzCXdCEaqa41",
     features: [
-      "Fonctionnalité 1",
-      "Fonctionnalité 2",
-      "Fonctionnalité 3",
-      "Fonctionnalité 4",
+      "Partager ses systèmes",
+      "Sauvegarder ses systèmes",
+      "Accéder à sa bibliothèque",
     ],
   },
 };
