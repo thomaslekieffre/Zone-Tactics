@@ -26,7 +26,7 @@ import { GrReturn } from "react-icons/gr";
 import { useRouter } from "next/router";
 import { url } from "inspector";
 import { useSubscription } from "../hooks/useSubscription";
-import { withSubscription } from "@/components/withSubscription";
+import { withPremiumAccess } from "@/components/withSubscription";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -927,7 +927,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const generateShareLink = async () => {
     if (subscriptionStatus !== "active") {
       alert(
-        "Cette fonctionnalité est réservée aux abonnés premium. Veuillez vous abonner pour l'utiliser."
+        "Le partage de systèmes est réservé aux abonnés premium. Veuillez vous abonner pour utiliser cette fonctionnalité."
       );
       return;
     }
@@ -1395,4 +1395,4 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   );
 };
 
-export default withSubscription(CreateSystem);
+export default CreateSystem;
