@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from "next";
 import { buffer } from "micro";
 import Stripe from "stripe";
 import { put } from "@vercel/blob";
+import { PutBlobResult } from "@vercel/blob";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-09-30.acacia",
@@ -25,20 +26,27 @@ async function updateUserSubscription(
   });
 
   try {
-    const { url } = await put(
+    console.log(
+      `Tentative de mise à jour de l'abonnement pour l'utilisateur ${userId}`
+    );
+    const result: PutBlobResult = await put(
       `subscriptions/${userId}.json`,
       subscriptionData,
       {
         access: "public",
+        addRandomSuffix: false,
       }
     );
 
     console.log(
-      `Mise à jour de l'abonnement pour l'utilisateur ${userId}: ${subscriptionStatus}`
+      `Abonnement mis à jour avec succès. URL du blob: ${result.url}`
     );
-    console.log(`URL du blob: ${url}`);
+    return result;
   } catch (error) {
-    console.error("Erreur lors de la mise à jour de l'abonnement:", error);
+    console.error(
+      `Erreur lors de la mise à jour de l'abonnement pour l'utilisateur ${userId}:`,
+      error
+    );
     throw error;
   }
 }
@@ -68,11 +76,22 @@ export default async function handler(
       case "checkout.session.completed":
         const session = event.data.object as Stripe.Checkout.Session;
         if (session.client_reference_id && session.subscription) {
-          await updateUserSubscription(
-            session.client_reference_id,
-            "active",
-            session.subscription as string
-          );
+          try {
+            await updateUserSubscription(
+              session.client_reference_id,
+              "active",
+              session.subscription as string
+            );
+            console.log(
+              `Abonnement activé pour l'utilisateur ${session.client_reference_id}`
+            );
+          } catch (error) {
+            console.error(
+              `Erreur lors de l'activation de l'abonnement:`,
+              error
+            );
+            // Vous pouvez choisir de renvoyer une réponse d'erreur ici si nécessaire
+          }
         }
         break;
       case "customer.subscription.updated":
