@@ -476,9 +476,17 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     }
 
     // Si c'était la dernière séquence, revenir à la configuration initiale
-    if (timeline.length === 1 && initialSetup) {
-      setPlayersOnCourt(initialSetup.players);
-      setBallPosition(initialSetup.ball);
+    if (timeline.length === 1) {
+      // Remettre tous les joueurs dans la sidebar
+      setPlayersOnCourt([]);
+      setTeam1Players([1, 2, 3, 4, 5]);
+      setTeam2Players([1, 2, 3, 4, 5]);
+
+      // Remettre le ballon dans la sidebar
+      setBallPosition(null);
+
+      // Réinitialiser initialSetup
+      setInitialSetup(null);
     }
   };
 
