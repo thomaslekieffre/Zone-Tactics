@@ -1,12 +1,18 @@
 import Header from "@/components/Header";
 import Image from "next/image";
-import { motion } from "framer-motion";
+import { motion, useInView } from "framer-motion";
 import Footer from "@/components/Footer";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { useRef } from "react";
 
 export default function Home() {
   const { isSignedIn } = useUser();
+
+  const featuresRef = useRef(null);
+  const aboutRef = useRef(null);
+  const isFeaturesInView = useInView(featuresRef, { once: true, amount: 0.2 });
+  const isAboutInView = useInView(aboutRef, { once: true, amount: 0.2 });
 
   return (
     <div className="flex flex-col min-h-screen bg-bleu">
@@ -41,7 +47,7 @@ export default function Home() {
         >
           Grâce à ZoneTactics, vos joueurs comprendront plus simplement vos
           tactiques grâce à des animations rapides et fluides très simples à
-          créer et modifier.
+          créer et à partager !
         </motion.p>
         <motion.div className="space-x-4">
           {isSignedIn ? (
@@ -104,29 +110,33 @@ export default function Home() {
             className="rounded-lg"
           />
         </motion.div>
-        <section className="text-center text-white" id="features">
+        <section
+          ref={featuresRef}
+          className="text-center text-white"
+          id="features"
+        >
           <motion.h2
             className="text-5xl font-bold mb-6"
             initial={{ opacity: 0, y: 50 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5, duration: 1 }}
+            animate={isFeaturesInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 1 }}
           >
             Les fonctionnalités pour devenir LE coach
           </motion.h2>
           <motion.p
             className="text-xl mb-10"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.7, duration: 1 }}
+            animate={isFeaturesInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.2, duration: 1 }}
           >
-            Voici tous ce que nous proposons afin de vous aider dans votre
+            Voici tout ce que nous proposons afin de vous aider dans votre
             coaching !
           </motion.p>
           <motion.div
             className="grid grid-cols-1 md:grid-cols-2 gap-8 m-40"
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1, duration: 1 }}
+            animate={isFeaturesInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.4, duration: 1 }}
           >
             <motion.div
               className="bg-blue-300 bg-opacity-10 p-6 rounded-lg shadow-md"
@@ -211,6 +221,46 @@ export default function Home() {
                 />
               </div>
             </motion.div>
+          </motion.div>
+        </section>
+        <section
+          ref={aboutRef}
+          id="about"
+          className="text-center text-white mt-20 mb-20 w-full max-w-4xl mx-auto"
+        >
+          <motion.h2
+            className="text-5xl font-bold mb-10"
+            initial={{ opacity: 0, y: 50 }}
+            animate={isAboutInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 1 }}
+          >
+            À propos de Zone Tactics
+          </motion.h2>
+          <motion.div
+            className="bg-blue-300 bg-opacity-10 p-10 rounded-lg shadow-lg"
+            initial={{ opacity: 0 }}
+            animate={isAboutInView ? { opacity: 1 } : {}}
+            transition={{ delay: 0.2, duration: 1 }}
+            whileHover={{ scale: 1.05 }}
+          >
+            <p className="text-lg mb-6">
+              Zone Tactics est une plateforme SaaS innovante conçue pour les
+              coachs de basketball, leur permettant de créer et partager des
+              tactiques dynamiques avec leurs équipes. Grâce à une interface
+              intuitive, les coachs peuvent élaborer des animations détaillées
+              de stratégies, ajoutant des commentaires vocaux et partageant
+              facilement leurs systèmes via des liens uniques.
+            </p>
+            <p className="text-lg">
+              Derrière Zone Tactics se trouve Thomas, un développeur passionné
+              et basketteur, qui combine ses compétences techniques et son
+              expérience sur le terrain. En tant que coach et joueur, il
+              comprend les besoins des équipes et des entraîneurs, et a conçu
+              cette plateforme pour optimiser la communication, la préparation
+              et l'exécution des tactiques. Chaque fonctionnalité a été pensée
+              pour répondre aux défis rencontrés dans la pratique quotidienne du
+              basketball.
+            </p>
           </motion.div>
         </section>
       </main>
