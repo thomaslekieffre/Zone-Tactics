@@ -156,10 +156,11 @@ export default function Home() {
                 </h3>
               </div>
               <p>
-                Il va falloir penser à préparer les textes, ils doivent être pas
-                mal long quand même, on les fera avec got plus que juju paye
-                t&apos;in il est sympatoche et j pense ils ira jla, ya les img à
-                changer aussi mais sinon c&apos;est good
+                Zone Tactics permet aux coachs de suivre les performances de
+                leurs joueurs. A chaque fin de match, vous pouvez entrer les
+                statistiques de vos joueurs, identifiez les points forts et les
+                axes d&apos;amélioration pour maximiser leur rendement et
+                prendre des décisions stratégiques rapidement.
               </p>
             </motion.div>
             <motion.div
@@ -180,14 +181,15 @@ export default function Home() {
                 </h3>
               </div>
               <p>
-                Il va falloir penser à préparer les textes, ils doivent être pas
-                mal long quand même, on les fera avec got plus que juju paye
-                t&apos;in il est sympatoche et j pense ils ira, ya les img à
-                changer aussi mais sinon c&apos;est good
+                Accédez à votre bibliothèque complète de tactiques
+                personnalisables. Créez, organisez et sauvegardez vos stratégies
+                pour les utiliser en fonction des besoins de l&apos;équipe.
+                Chaque tactique peut être partagée avec vos joueurs, leur
+                permettant de mieux se préparer avant les matchs.
               </p>
             </motion.div>
             <motion.div
-              className="bg-blue-300 bg-opacity-10 p-6 rounded-lg shadow-md md:col-span-2 flex flex-col md:flex-row md:items-start"
+              className="bg-blue-300 bg-opacity-10 p-6 rounded-lg shadow-md md:col-span-2 flex flex-col md:flex-row items-start"
               whileHover={{ scale: 1.05 }}
             >
               <div className="w-full md:w-1/2 mr-0 md:mr-6 mb-6 md:mb-0">
@@ -204,19 +206,29 @@ export default function Home() {
                     Créateur d&apos;animations
                   </h3>
                 </div>
-                <p className="mt-4 w-9/12 m-12">
-                  Il va falloir penser à préparer les textes, ils doivent être
-                  pas mal long quand même, on les fera avec got plus que juju
-                  paye t&apos;in il est sympatoche et j pense ils ira, ya les
-                  img à changer aussi mais sinon c&apos;est good
+                <p className="text-left">
+                  Avec Zone Tactics, créez des animations détaillées pour
+                  illustrer vos stratégies sur le terrain. Grâce à notre
+                  interface intuitive, vous pouvez facilement modéliser les
+                  mouvements de vos joueurs, simuler des actions clés et ajuster
+                  les positions en temps réel. Que ce soit pour des situations
+                  offensives ou défensives, vous pouvez démontrer chaque étape
+                  de votre plan de jeu. Ces animations permettent à vos joueurs
+                  de visualiser et comprendre plus rapidement les tactiques
+                  complexes. De plus, vous avez la possibilité d'ajouter des
+                  commentaires vocaux pour clarifier des points spécifiques ou
+                  insister sur des détails critiques. En combinant des visuels
+                  clairs et des explications précises, le créateur d'animations
+                  devient un outil indispensable pour assurer une communication
+                  efficace entre vous et votre équipe.
                 </p>
               </div>
-              <div className="ml-32">
+              <div className="w-full md:w-1/2">
                 <Image
                   src="/img/Screen2.png"
                   alt="Illustration de tactique"
-                  width={400}
-                  height={300}
+                  width={300}
+                  height={200}
                   className="rounded-lg w-full h-auto"
                 />
               </div>
@@ -257,9 +269,9 @@ export default function Home() {
               expérience sur le terrain. En tant que coach et joueur, il
               comprend les besoins des équipes et des entraîneurs, et a conçu
               cette plateforme pour optimiser la communication, la préparation
-              et l'exécution des tactiques. Chaque fonctionnalité a été pensée
-              pour répondre aux défis rencontrés dans la pratique quotidienne du
-              basketball.
+              et l&apos;exécution des tactiques. Chaque fonctionnalité a été
+              pensée pour répondre aux défis rencontrés dans la pratique
+              quotidienne du basketball.
             </p>
           </motion.div>
         </section>
