@@ -6,27 +6,60 @@ export default function Footer() {
       <div className="container mx-auto flex flex-col md:flex-row justify-between items-center text-white">
         <div className="mb-8 md:mb-0">
           <h3 className="text-xl font-bold mb-4">Contact</h3>
-          <p>Développeur : thomas.lekeiffredew@gmail.com</p>
-          <p>Graphiste : zoe.marchal10@gmail.com</p>
-          <p>Mail Projet : zonetactics@zonet.fr</p>
+          <a
+            href="https://github.com/thomaslekieffre"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-blue-600 transition-colors duration-300"
+          >
+            Développeur : thomas.lekieffredev@gmail.com
+          </a>
+          <a
+            href="https://github.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-blue-600 transition-colors duration-300"
+          >
+            Graphiste : zoe.marchal10@gmail.com
+          </a>
+          <a
+            href="https://github.com/thomaslekieffre/Zone-Tactics"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block hover:text-blue-600 transition-colors duration-300"
+          >
+            Mail Projet : zonetactics@zonet.fr
+          </a>
           <p className="mt-4">© 2024 - ZoneTactics - Tous droits réservés</p>
         </div>
         <div className="mb-8 md:mb-0">
           <h3 className="text-xl font-bold mb-4">Social</h3>
           <ul>
-            <li>Twitter</li>
-            <li>Instagram</li>
-            <li>Tik Tok</li>
+            <li>
+              <a
+                href="https://x.com/thomasdev59"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:text-blue-600 transition-colors duration-300"
+              >
+                Twitter
+              </a>
+            </li>
           </ul>
         </div>
-        <div className="flex items-center">
-          <Image
-            src="/img/logo.png"
-            alt="Logo ZoneTactics"
-            width={80}
-            height={80}
-          />
-          <span className="text-2xl font-bold ml-4">ZoneTactics</span>
+        <div className="flex items-center group cursor-pointer">
+          <div className="relative">
+            <Image
+              src="/img/logo.png"
+              alt="Logo ZoneTactics"
+              width={80}
+              height={80}
+              className="transition-transform duration-300 group-hover:scale-110"
+            />
+          </div>
+          <span className="text-2xl font-bold ml-4 group-hover:text-blue-600 transition-colors duration-300">
+            ZoneTactics
+          </span>
         </div>
       </div>
     </footer>

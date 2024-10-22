@@ -18,8 +18,9 @@ export default function Home() {
         transition={{ duration: 0.8 }}
       >
         <motion.button
-          className="bg-transparent text-white border border-white py-2 px-4 rounded-full mb-8"
-          whileHover={{ scale: 1.1 }}
+          className="bg-transparent text-white border border-white py-2 px-4 rounded-full mb-8 cursor-default"
+          animate={{ scale: [1, 1.1, 1] }}
+          transition={{ repeat: Infinity, repeatType: "loop", duration: 3 }}
           whileTap={{ scale: 0.95 }}
         >
           Découvrez le nouvel indispensable du coach !
@@ -96,14 +97,14 @@ export default function Home() {
           transition={{ duration: 1 }}
         >
           <Image
-            src="/img/screen1.png"
+            src="/img/pc.png"
             alt="Aperçu de l'application"
             width={800}
             height={400}
             className="rounded-lg"
           />
         </motion.div>
-        <section className="text-center text-white">
+        <section className="text-center text-white" id="features">
           <motion.h2
             className="text-5xl font-bold mb-6"
             initial={{ opacity: 0, y: 50 }}
