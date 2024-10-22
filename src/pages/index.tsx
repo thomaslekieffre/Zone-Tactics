@@ -189,48 +189,51 @@ export default function Home() {
               </p>
             </motion.div>
             <motion.div
-              className="bg-blue-300 bg-opacity-10 p-6 rounded-lg shadow-md md:col-span-2 flex flex-col md:flex-row items-start"
+              className="bg-blue-300 bg-opacity-10 p-6 rounded-lg shadow-md md:col-span-2"
               whileHover={{ scale: 1.05 }}
             >
-              <div className="w-full md:w-1/2 mr-0 md:mr-6 mb-6 md:mb-0">
-                <div className="flex items-center mb-4">
-                  <div className="p-3">
-                    <Image
-                      src="/img/Icon3.png"
-                      alt="Icone de créateur d'animations"
-                      width={120}
-                      height={120}
-                    />
-                  </div>
-                  <h3 className="text-2xl font-bold ml-4">
-                    Créateur d&apos;animations
-                  </h3>
+              <div className="flex items-center mb-6">
+                <div className="p-3">
+                  <Image
+                    src="/img/Icon3.png"
+                    alt="Icone de créateur d'animations"
+                    width={120}
+                    height={120}
+                  />
                 </div>
-                <p className="text-left">
-                  Avec Zone Tactics, créez des animations détaillées pour
-                  illustrer vos stratégies sur le terrain. Grâce à notre
-                  interface intuitive, vous pouvez facilement modéliser les
-                  mouvements de vos joueurs, simuler des actions clés et ajuster
-                  les positions en temps réel. Que ce soit pour des situations
-                  offensives ou défensives, vous pouvez démontrer chaque étape
-                  de votre plan de jeu. Ces animations permettent à vos joueurs
-                  de visualiser et comprendre plus rapidement les tactiques
-                  complexes. De plus, vous avez la possibilité d&apos;ajouter
-                  des commentaires vocaux pour clarifier des points spécifiques
-                  ou insister sur des détails critiques. En combinant des
-                  visuels clairs et des explications précises, le créateur
-                  d&apos;animations devient un outil indispensable pour assurer
-                  une communication efficace entre vous et votre équipe.
-                </p>
+                <h3 className="text-2xl font-bold ml-4">
+                  Créateur d&apos;animations
+                </h3>
               </div>
-              <div className="w-full md:w-1/2">
-                <Image
-                  src="/img/Screen2.png"
-                  alt="Illustration de tactique"
-                  width={300}
-                  height={200}
-                  className="rounded-lg w-full h-auto"
-                />
+              <div className="flex flex-col md:flex-row items-center">
+                <div className="w-full md:w-1/2 pr-0 md:pr-6 mb-6 md:mb-0">
+                  <p className="text-left">
+                    Avec Zone Tactics, créez des animations détaillées pour
+                    illustrer vos stratégies sur le terrain. Grâce à notre
+                    interface intuitive, vous pouvez facilement modéliser les
+                    mouvements de vos joueurs, simuler des actions clés et
+                    ajuster les positions en temps réel. Que ce soit pour des
+                    situations offensives ou défensives, vous pouvez démontrer
+                    chaque étape de votre plan de jeu. Ces animations permettent
+                    à vos joueurs de visualiser et comprendre plus rapidement
+                    les tactiques complexes. De plus, vous avez la possibilité
+                    d&apos;ajouter des commentaires vocaux pour clarifier des
+                    points spécifiques ou insister sur des détails critiques. En
+                    combinant des visuels clairs et des explications précises,
+                    le créateur d'animations devient un outil indispensable pour
+                    assurer une communication efficace entre vous et votre
+                    équipe.
+                  </p>
+                </div>
+                <div className="w-full md:w-1/2 flex justify-center items-center">
+                  <Image
+                    src="/img/Screen2.png"
+                    alt="Illustration de tactique"
+                    width={400}
+                    height={300}
+                    className="rounded-lg w-auto h-auto max-w-full"
+                  />
+                </div>
               </div>
             </motion.div>
           </motion.div>
