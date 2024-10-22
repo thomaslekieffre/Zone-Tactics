@@ -29,6 +29,7 @@ import { url } from "inspector";
 import { useSubscription } from "../hooks/useSubscription";
 import { withPremiumAccess } from "@/components/withSubscription";
 import { DndProvider } from "react-dnd";
+import Link from "next/link";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -64,6 +65,7 @@ type CreateSystemProps = {
       x: number;
       y: number;
     }>;
+    ball?: { x: number; y: number } | null;
   };
   readOnly?: boolean;
   systemName?: string;
@@ -407,6 +409,9 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const subscriptionStatus = useSubscription();
   const { user } = useUser();
   const router = useRouter();
+  const handleGoBack = useCallback(() => {
+    window.location.href = "/";
+  }, []);
   const [systemName, setSystemName] = useState(initialSystemName);
 
   const [playersOnCourt, setPlayersOnCourt] = useState<
@@ -451,7 +456,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
     setTimeline((prevTimeline) => prevTimeline.slice(0, -1));
 
-    // Remettre les joueurs à leur position précédente
     setPlayersOnCourt((prevPlayers) =>
       prevPlayers.map((player) => {
         const previousPosition = lastSequence.players.find(
@@ -467,7 +471,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       })
     );
 
-    // Remettre le ballon à sa position précédente
     if (lastSequence.ball) {
       setBallPosition({
         x: lastSequence.ball.startX,
@@ -475,17 +478,13 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       });
     }
 
-    // Si c'était la dernière séquence, revenir à la configuration initiale
     if (timeline.length === 1) {
-      // Remettre tous les joueurs dans la sidebar
       setPlayersOnCourt([]);
       setTeam1Players([1, 2, 3, 4, 5]);
       setTeam2Players([1, 2, 3, 4, 5]);
 
-      // Remettre le ballon dans la sidebar
       setBallPosition(null);
 
-      // Réinitialiser initialSetup
       setInitialSetup(null);
     }
   };
@@ -547,7 +546,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     return { width, height };
   };
 
-  const updateCourtSize = () => {
+  const updateCourtSize = useCallback(() => {
     if (courtContainerRef.current) {
       const containerRect = courtContainerRef.current.getBoundingClientRect();
       const newSize = calculateCourtSize(
@@ -556,7 +555,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       );
       setCourtSize(newSize);
     }
-  };
+  }, [isPresentationMode, courtContainerRef]);
 
   useEffect(() => {
     setIsMounted(true);
@@ -591,6 +590,14 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       console.log("Données initiales reçues:", initialData);
       setTimeline(initialData.timeline);
       setPlayersOnCourt(initialData.playersOnCourt);
+      setBallPosition(initialData.ball || null);
+      setInitialSetup({
+        players: initialData.playersOnCourt,
+        ball: initialData.ball || null,
+      });
+      setArrows([]);
+      setDottedArrows([]);
+      setActionHistory([]);
     }
   }, [initialData]);
 
@@ -1148,9 +1155,9 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     }
   };
 
-  const goToLibrary = () => {
-    router.push("/library");
-  };
+  const goToLibrary = useCallback(() => {
+    window.location.href = "/library";
+  }, []);
 
   return (
     <DndProvider backend={HTML5Backend}>
@@ -1162,10 +1169,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         {!isPresentationMode && (
           <nav className="bg-blue-800 text-white flex justify-between p-4">
             <div className="flex items-center space-x-4">
-              <button
-                className="back-button p-2"
-                onClick={() => router.push("/")}
-              >
+              <button onClick={handleGoBack} className="back-button p-2">
                 <ArrowLeft size={20} />
               </button>
               {readOnly ? (
