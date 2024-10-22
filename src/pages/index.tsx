@@ -215,12 +215,12 @@ export default function Home() {
                   offensives ou défensives, vous pouvez démontrer chaque étape
                   de votre plan de jeu. Ces animations permettent à vos joueurs
                   de visualiser et comprendre plus rapidement les tactiques
-                  complexes. De plus, vous avez la possibilité d'ajouter des
-                  commentaires vocaux pour clarifier des points spécifiques ou
-                  insister sur des détails critiques. En combinant des visuels
-                  clairs et des explications précises, le créateur d'animations
-                  devient un outil indispensable pour assurer une communication
-                  efficace entre vous et votre équipe.
+                  complexes. De plus, vous avez la possibilité d&apos;ajouter
+                  des commentaires vocaux pour clarifier des points spécifiques
+                  ou insister sur des détails critiques. En combinant des
+                  visuels clairs et des explications précises, le créateur
+                  d&apos;animations devient un outil indispensable pour assurer
+                  une communication efficace entre vous et votre équipe.
                 </p>
               </div>
               <div className="w-full md:w-1/2">
