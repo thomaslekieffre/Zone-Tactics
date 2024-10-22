@@ -208,20 +208,20 @@ export default function Home() {
               <div className="flex flex-col md:flex-row items-center">
                 <div className="w-full md:w-1/2 pr-0 md:pr-6 mb-6 md:mb-0">
                   <p className="text-left">
-                    Avec Zone Tactics, créez des animations détaillées pour
-                    illustrer vos stratégies sur le terrain. Grâce à notre
-                    interface intuitive, vous pouvez facilement modéliser les
-                    mouvements de vos joueurs, simuler des actions clés et
-                    ajuster les positions en temps réel. Que ce soit pour des
-                    situations offensives ou défensives, vous pouvez démontrer
-                    chaque étape de votre plan de jeu. Ces animations permettent
-                    à vos joueurs de visualiser et comprendre plus rapidement
-                    les tactiques complexes. De plus, vous avez la possibilité
-                    d&apos;ajouter des commentaires vocaux pour clarifier des
-                    points spécifiques ou insister sur des détails critiques. En
+                    Avec Zone Tactics, vous pouvez créer des animations
+                    détaillées pour illustrer vos stratégies sur le terrain.
+                    Grâce à notre interface intuitive, vous pouvez facilement
+                    modéliser les mouvements de vos joueurs, simuler des actions
+                    clés et ajuster les positions en temps réel. Que ce soit
+                    pour des situations offensives ou défensives, vous pouvez
+                    démontrer chaque étape de votre plan de jeu. Ces animations
+                    permettent à vos joueurs de visualiser et comprendre plus
+                    rapidement les tactiques complexes. De plus, vous pouvez
+                    ajouter des commentaires vocaux pour clarifier des points
+                    spécifiques ou insister sur des détails critiques. En
                     combinant des visuels clairs et des explications précises,
-                    le créateur d'animations devient un outil indispensable pour
-                    assurer une communication efficace entre vous et votre
+                    le créateur d&apos;animations devient un outil indispensable
+                    pour assurer une communication efficace entre vous et votre
                     équipe.
                   </p>
                 </div>
