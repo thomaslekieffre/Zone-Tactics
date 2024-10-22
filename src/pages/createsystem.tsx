@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   ArrowLeft,
   ArrowRight,
@@ -443,6 +443,45 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const [timeline, setTimeline] = useState<LocalAnimationSequence[]>(
     initialData?.timeline || []
   );
+
+  const removeSequence = () => {
+    if (timeline.length === 0) return;
+
+    const lastSequence = timeline[timeline.length - 1];
+
+    setTimeline((prevTimeline) => prevTimeline.slice(0, -1));
+
+    // Remettre les joueurs à leur position précédente
+    setPlayersOnCourt((prevPlayers) =>
+      prevPlayers.map((player) => {
+        const previousPosition = lastSequence.players.find(
+          (p) => p.id === player.id
+        );
+        return previousPosition
+          ? {
+              ...player,
+              x: previousPosition.startX,
+              y: previousPosition.startY,
+            }
+          : player;
+      })
+    );
+
+    // Remettre le ballon à sa position précédente
+    if (lastSequence.ball) {
+      setBallPosition({
+        x: lastSequence.ball.startX,
+        y: lastSequence.ball.startY,
+      });
+    }
+
+    // Si c'était la dernière séquence, revenir à la configuration initiale
+    if (timeline.length === 1 && initialSetup) {
+      setPlayersOnCourt(initialSetup.players);
+      setBallPosition(initialSetup.ball);
+    }
+  };
+
   const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
 
   const courtRef = useRef<HTMLDivElement>(null);
@@ -1193,12 +1232,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                       title="Valider le mouvement"
                       description="Cliquez pour ajouter la séquence à la timeline"
                     />
-                    <ActionButton
-                      onClick={goToLibrary}
-                      icon={<BookOpen size={28} />}
-                      title="Ma Bibliothèque"
-                      description="Voir tous mes systèmes sauvegardés"
-                    />
+
                     <ActionButton
                       onClick={() => setSelectingShoot(!selectingShoot)}
                       disabled={!ballPosition || isCourtEmpty}
@@ -1211,14 +1245,66 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                       }
                       isActive={selectingShoot}
                     />
+
+                    <ActionButton
+                      onClick={goToLibrary}
+                      icon={<BookOpen size={28} />}
+                      title="Ma Bibliothèque"
+                      description="Voir tous mes systèmes sauvegardés"
+                    />
                   </div>
                 </div>
                 <div>
                   <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
                   <div className="space-y-2">
                     {timeline.map((sequence, index) => (
-                      <div key={index} className="bg-blue-700 p-2 rounded">
-                        <div>Séquence {index + 1}</div>
+                      <div
+                        key={index}
+                        className={`bg-blue-700 p-2 rounded ${
+                          index === timeline.length - 1
+                            ? "border-2 border-yellow-400"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>Séquence {index + 1}</div>
+                          <div className="flex space-x-2">
+                            {!isRecordingAudio ||
+                            currentRecordingIndex !== index ? (
+                              <button
+                                onClick={() => startAudioRecording(index)}
+                                className="bg-green-500 text-white p-2 rounded"
+                                title="Enregistrer un commentaire audio"
+                              >
+                                <Mic size={20} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={stopAudioRecording}
+                                className="bg-red-500 text-white p-2 rounded animate-pulse"
+                                title="Arrêter l'enregistrement"
+                              >
+                                <MicOff size={20} />
+                              </button>
+                            )}
+                            <button
+                              onClick={removeSequence}
+                              className={`p-2 rounded ${
+                                index === timeline.length - 1
+                                  ? "bg-red-500 text-white hover:bg-red-600"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              }`}
+                              title={
+                                index === timeline.length - 1
+                                  ? "Supprimer cette séquence"
+                                  : "Seule la dernière séquence peut être supprimée"
+                              }
+                              disabled={index !== timeline.length - 1}
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                        </div>
                         <input
                           type="text"
                           value={sequence.comment}
@@ -1230,42 +1316,15 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                           className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
                           placeholder="Ajouter un commentaire pour cette séquence..."
                         />
-                        <div className="mt-2 flex items-center space-x-2">
-                          {!isRecordingAudio ||
-                          currentRecordingIndex !== index ? (
-                            <button
-                              onClick={() => startAudioRecording(index)}
-                              className="bg-green-500 text-white p-2 rounded"
-                              title="Enregistrer un commentaire audio"
-                            >
-                              <Mic size={20} />
-                            </button>
-                          ) : (
-                            <button
-                              onClick={stopAudioRecording}
-                              className="bg-red-500 text-white p-2 rounded animate-pulse"
-                              title="Arrêter l'enregistrement"
-                            >
-                              <MicOff size={20} />
-                            </button>
-                          )}
-                          {sequence.audioComment && (
-                            <>
-                              <audio
-                                src={sequence.audioComment}
-                                controls
-                                className="h-8"
-                              />
-                              <button
-                                onClick={() => deleteAudioComment(index)}
-                                className="bg-red-500 text-white p-2 rounded"
-                                title="Supprimer le commentaire audio"
-                              >
-                                <Trash2 size={20} />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        {sequence.audioComment && (
+                          <div className="mt-2">
+                            <audio
+                              src={sequence.audioComment}
+                              controls
+                              className="w-full h-8"
+                            />
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
