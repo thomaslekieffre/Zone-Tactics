@@ -133,7 +133,7 @@ export default function Home() {
             coaching !
           </motion.p>
           <motion.div
-            className="grid grid-cols-1 md:grid-cols-2 gap-8 m-40"
+            className="grid grid-cols-1 md:grid-cols-2 gap-8 m-4 md:m-40"
             initial={{ opacity: 0 }}
             animate={isFeaturesInView ? { opacity: 1 } : {}}
             transition={{ delay: 0.4, duration: 1 }}
@@ -241,7 +241,7 @@ export default function Home() {
         <section
           ref={aboutRef}
           id="about"
-          className="text-center text-white mt-20 mb-20 w-full max-w-4xl mx-auto"
+          className="text-center text-white mt-20 mb-20 w-full max-w-4xl mx-auto px-4"
         >
           <motion.h2
             className="text-5xl font-bold mb-10"
