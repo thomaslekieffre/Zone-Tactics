@@ -25,9 +25,9 @@ export default function Header(): JSX.Element {
             <a href="#features" className="hover:text-white">
               Fonctionnalités
             </a>
-            <a href="#pricing" className="hover:text-white">
+            <Link href="/pricing" className="hover:text-white">
               Prix
-            </a>
+            </Link>
             <a href="#about" className="hover:text-white">
               À propos
             </a>
