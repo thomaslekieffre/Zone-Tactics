@@ -721,137 +721,87 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   };
 
   const handleValidateMovement = () => {
-    // Vérifier si tous les joueurs sont sur le terrain
-    const allPlayersOnCourt =
-      team1Players.length === 0 && team2Players.length === 0;
-
-    // Vérifier si le ballon est présent
-    const ballIsPresent = ballPosition !== null;
-
-    if (!allPlayersOnCourt || !ballIsPresent) {
+    // Vérifications initiales
+    if (team1Players.length > 0 || team2Players.length > 0 || !ballPosition) {
       alert(
         "Tous les joueurs doivent être sur le terrain et le ballon doit être présent pour valider une séquence."
       );
       return;
     }
 
-    const playersToAnimate: any[] = [];
-    let ballToAnimate: {
-      x: number;
-      y: number;
-      targetX: number;
-      targetY: number;
-    } | null = null;
+    const newSequence: LocalAnimationSequence = {
+      id: Date.now().toString(),
+      players: playersOnCourt.map((player) => ({
+        id: player.id,
+        startX: player.x,
+        startY: player.y,
+        endX: player.x,
+        endY: player.y,
+      })),
+      ball: {
+        startX: ballPosition.x,
+        startY: ballPosition.y,
+        endX: ballPosition.x,
+        endY: ballPosition.y,
+      },
+      comment: "",
+      audioComment: undefined,
+    };
 
-    const playerWithBall = ballPosition
-      ? playersOnCourt.find(
-          (player) =>
-            Math.abs(player.x - ballPosition.x + 22) < 5 &&
-            Math.abs(player.y - ballPosition.y) < 5
-        )
-      : null;
-
+    // Mise à jour des positions finales pour les mouvements
     arrows.forEach((arrow) => {
-      const playerToMove = playersOnCourt.find(
-        (player) =>
-          Math.abs(player.x - arrow.start.x) < 5 &&
-          Math.abs(player.y - arrow.start.y) < 5
+      const playerToMove = newSequence.players.find(
+        (p) =>
+          Math.abs(p.startX - arrow.start.x) < 5 &&
+          Math.abs(p.startY - arrow.start.y) < 5
       );
       if (playerToMove) {
-        playersToAnimate.push({
-          ...playerToMove,
-          targetX: arrow.end.x,
-          targetY: arrow.end.y,
-        });
-
-        if (playerWithBall && playerWithBall.id === playerToMove.id) {
-          ballToAnimate = {
-            ...ballPosition!,
-            targetX: arrow.end.x + 22,
-            targetY: arrow.end.y,
-          };
-        }
+        playerToMove.endX = arrow.end.x;
+        playerToMove.endY = arrow.end.y;
       }
     });
 
-    if (dottedArrows.length > 0 && ballPosition) {
+    // Mise à jour de la position finale du ballon
+    if (dottedArrows.length > 0) {
       const lastDottedArrow = dottedArrows[dottedArrows.length - 1];
-      const ballReceiver = playersOnCourt.find(
-        (player) =>
-          Math.abs(player.x - lastDottedArrow.end.x) < 5 &&
-          Math.abs(player.y - lastDottedArrow.end.y) < 5
-      );
-      if (ballReceiver) {
-        const receiverAnimation = playersToAnimate.find(
-          (p) => p.id === ballReceiver.id
-        );
-        ballToAnimate = {
-          ...ballPosition,
-          targetX:
-            (receiverAnimation ? receiverAnimation.targetX : ballReceiver.x) +
-            22,
-          targetY: receiverAnimation
-            ? receiverAnimation.targetY
-            : ballReceiver.y,
-        };
-      }
+      newSequence.ball = newSequence.ball ?? {
+        startX: 0,
+        startY: 0,
+        endX: 0,
+        endY: 0,
+      };
+      newSequence.ball.endX = lastDottedArrow.end.x + 22;
+      newSequence.ball.endY = lastDottedArrow.end.y;
     }
 
-    if (playersToAnimate.length > 0 || ballToAnimate) {
-      const newSequence: LocalAnimationSequence = {
-        id: Date.now().toString(),
-        players: playersToAnimate.map((player) => ({
-          id: player.id,
-          startX: player.x,
-          startY: player.y,
-          endX: player.targetX,
-          endY: player.targetY,
-        })),
-        ball: ballToAnimate
-          ? {
-              startX: ballPosition!.x,
-              startY: ballPosition!.y,
-              endX: ballToAnimate.targetX,
-              endY: ballToAnimate.targetY,
-            }
-          : undefined,
-        comment: "",
-        audioComment: undefined,
-      };
+    // Ajout de la nouvelle séquence à la timeline
+    setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
 
-      setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
+    // Animation
+    setIsAnimating(true);
+    setTimeout(() => {
+      setPlayersOnCourt(
+        newSequence.players.map((p) => ({
+          ...playersOnCourt.find((player) => player.id === p.id)!,
+          x: p.endX,
+          y: p.endY,
+        }))
+      );
+      setBallPosition({
+        x: newSequence.ball?.endX ?? ballPosition.x,
+        y: newSequence.ball?.endY ?? ballPosition.y,
+      });
+      setIsAnimating(false);
+      setArrows([]);
+      setDottedArrows([]);
+    }, 1000);
 
-      setAnimatingPlayer(playersToAnimate);
-      setIsAnimating(true);
-
-      setTimeout(() => {
-        setPlayersOnCourt((players) =>
-          players.map((player) => {
-            const animatingPlayer = playersToAnimate.find(
-              (p) => p.id === player.id
-            );
-            return animatingPlayer
-              ? {
-                  ...player,
-                  x: animatingPlayer.targetX,
-                  y: animatingPlayer.targetY,
-                }
-              : player;
-          })
-        );
-
-        if (ballToAnimate) {
-          setBallPosition({
-            x: ballToAnimate.targetX,
-            y: ballToAnimate.targetY,
-          });
-        }
-
-        setAnimatingPlayer([]);
-        setIsAnimating(false);
-        setArrows([]);
-        setDottedArrows([]);
-      }, 1000);
+    // Sauvegarde de la configuration initiale si c'est la première séquence
+    if (timeline.length === 0) {
+      setInitialSetup({
+        players: playersOnCourt,
+        ball: ballPosition,
+      });
     }
   };
 
@@ -869,16 +819,36 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
     // Jouer chaque séquence de la timeline
     for (const sequence of timeline) {
+      // Réinitialiser les positions avant chaque séquence
+      setPlayersOnCourt((prevPlayers) =>
+        prevPlayers.map((player) => {
+          const sequencePlayer = sequence.players.find(
+            (p) => p.id === player.id
+          );
+          return sequencePlayer
+            ? { ...player, x: sequencePlayer.startX, y: sequencePlayer.startY }
+            : player;
+        })
+      );
+      if (sequence.ball) {
+        setBallPosition({ x: sequence.ball.startX, y: sequence.ball.startY });
+      }
+
+      // Attendre un court instant pour que le rendu se fasse
+      await new Promise((resolve) => setTimeout(resolve, 50));
+
+      // Animer vers les positions finales
       await new Promise<void>((resolve) => {
         setTimeout(() => {
-          setPlayersOnCourt(
-            sequence.players.map((p) => ({
-              id: p.id,
-              num: parseInt(p.id.split("-")[1]),
-              team: p.id.split("-")[0],
-              x: p.endX,
-              y: p.endY,
-            }))
+          setPlayersOnCourt((prevPlayers) =>
+            prevPlayers.map((player) => {
+              const sequencePlayer = sequence.players.find(
+                (p) => p.id === player.id
+              );
+              return sequencePlayer
+                ? { ...player, x: sequencePlayer.endX, y: sequencePlayer.endY }
+                : player;
+            })
           );
           if (sequence.ball) {
             setBallPosition({ x: sequence.ball.endX, y: sequence.ball.endY });
@@ -887,6 +857,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         }, 1000);
       });
 
+      // Pause entre chaque séquence
       await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
