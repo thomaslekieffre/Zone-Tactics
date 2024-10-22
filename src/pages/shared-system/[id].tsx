@@ -20,7 +20,7 @@ const SharedSystem = () => {
   const [systemData, setSystemData] = useState<SystemData | null>(null);
 
   useEffect(() => {
-    if (id) {
+    if (router.isReady && id) {
       fetch(`/api/get-shared-system?id=${id}`)
         .then((response) => response.json())
         .then((data: SystemData) => setSystemData(data))
@@ -28,7 +28,7 @@ const SharedSystem = () => {
           console.error("Erreur lors de la récupération du système:", error)
         );
     }
-  }, [id]);
+  }, [router.isReady, id]);
 
   if (!systemData) {
     return <div>Chargement...</div>;
