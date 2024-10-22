@@ -441,6 +441,16 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
   const [shareLink, setShareLink] = useState<string | null>(null);
 
+  const [initialPlayersPosition, setInitialPlayersPosition] =
+    useState(playersOnCourt);
+  const [initialBallPosition, setInitialBallPosition] = useState(ballPosition);
+
+  // Ajoutez cet état au début du composant
+  const [initialSetup, setInitialSetup] = useState<{
+    players: typeof playersOnCourt;
+    ball: typeof ballPosition;
+  } | null>(null);
+
   const calculateCourtSize = (
     containerWidth: number,
     containerHeight: number
@@ -569,6 +579,13 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       setTeam2Players((prevPlayers) => prevPlayers.filter((p) => p !== num));
     }
     addToHistory("player");
+    setInitialPlayersPosition(playersOnCourt);
+    if (timeline.length === 0) {
+      setInitialSetup((prev) => ({
+        players: playersOnCourt,
+        ball: prev ? prev.ball : ballPosition,
+      }));
+    }
   };
 
   const handleBasketballClick = () => {
@@ -576,6 +593,12 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       setBallPosition(null);
     } else {
       setSelectingPlayerForBall(true);
+    }
+    if (timeline.length === 0) {
+      setInitialSetup((prev) => ({
+        players: prev ? prev.players : playersOnCourt,
+        ball: ballPosition,
+      }));
     }
   };
 
@@ -698,6 +721,20 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   };
 
   const handleValidateMovement = () => {
+    // Vérifier si tous les joueurs sont sur le terrain
+    const allPlayersOnCourt =
+      team1Players.length === 0 && team2Players.length === 0;
+
+    // Vérifier si le ballon est présent
+    const ballIsPresent = ballPosition !== null;
+
+    if (!allPlayersOnCourt || !ballIsPresent) {
+      alert(
+        "Tous les joueurs doivent être sur le terrain et le ballon doit être présent pour valider une séquence."
+      );
+      return;
+    }
+
     const playersToAnimate: any[] = [];
     let ballToAnimate: {
       x: number;
@@ -820,40 +857,28 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
 
   const playTimeline = async () => {
     setIsPlayingTimeline(true);
+
+    // Réinitialiser à la position initiale
+    if (initialSetup) {
+      setPlayersOnCourt(initialSetup.players);
+      setBallPosition(initialSetup.ball);
+    }
+
+    // Attendre que le rendu initial soit fait
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Jouer chaque séquence de la timeline
     for (const sequence of timeline) {
       await new Promise<void>((resolve) => {
-        setPlayersOnCourt((prevPlayers) =>
-          prevPlayers.map((player) => {
-            const animatingPlayer = sequence.players.find(
-              (p) => p.id === player.id
-            );
-            return animatingPlayer
-              ? {
-                  ...player,
-                  x: animatingPlayer.startX,
-                  y: animatingPlayer.startY,
-                }
-              : player;
-          })
-        );
-        if (sequence.ball) {
-          setBallPosition({ x: sequence.ball.startX, y: sequence.ball.startY });
-        }
-
         setTimeout(() => {
-          setPlayersOnCourt((prevPlayers) =>
-            prevPlayers.map((player) => {
-              const animatingPlayer = sequence.players.find(
-                (p) => p.id === player.id
-              );
-              return animatingPlayer
-                ? {
-                    ...player,
-                    x: animatingPlayer.endX,
-                    y: animatingPlayer.endY,
-                  }
-                : player;
-            })
+          setPlayersOnCourt(
+            sequence.players.map((p) => ({
+              id: p.id,
+              num: parseInt(p.id.split("-")[1]),
+              team: p.id.split("-")[0],
+              x: p.endX,
+              y: p.endY,
+            }))
           );
           if (sequence.ball) {
             setBallPosition({ x: sequence.ball.endX, y: sequence.ball.endY });
@@ -861,7 +886,10 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
           resolve();
         }, 1000);
       });
+
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
+
     setIsPlayingTimeline(false);
   };
 
@@ -1242,7 +1270,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                     <ActionButton
                       onClick={generateShareLink}
                       icon={<Share2 size={28} />}
-                      title="Générer un lien de partage"
+                      title="Génrer un lien de partage"
                       description="Créez un lien pour partager votre système avec d'autres personnes"
                     />
                     {shareLink && (
