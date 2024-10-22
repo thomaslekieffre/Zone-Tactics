@@ -15,6 +15,7 @@ import {
   Trash2,
   Share2,
   BookOpen,
+  Target,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -27,6 +28,7 @@ import { useRouter } from "next/router";
 import { url } from "inspector";
 import { useSubscription } from "../hooks/useSubscription";
 import { withPremiumAccess } from "@/components/withSubscription";
+import { DndProvider } from "react-dnd";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -45,6 +47,11 @@ export type LocalAnimationSequence = {
   };
   comment: string;
   audioComment?: string;
+  shoot?: {
+    playerId: string;
+    targetX: number;
+    targetY: number;
+  };
 };
 
 type CreateSystemProps = {
@@ -61,6 +68,14 @@ type CreateSystemProps = {
   readOnly?: boolean;
   systemName?: string;
 };
+
+const BASKET_RELATIVE_X = 0.92;
+const BASKET_RELATIVE_Y = 0.5;
+
+const calculateBasketPosition = (courtWidth: number, courtHeight: number) => ({
+  x: courtWidth * 0.92,
+  y: courtHeight * 0.5,
+});
 
 const PlayerButton = ({
   num,
@@ -195,6 +210,7 @@ const Court = ({
   width,
   height,
   readOnly,
+  selectingShoot,
 }: any) => {
   const [, drop] = useDrop({
     accept: "player",
@@ -315,6 +331,20 @@ const Court = ({
             }}
           >
             <MousePointer size={24} color="yellow" />
+          </div>
+        )}
+
+        {selectingShoot && (
+          <div
+            className="absolute animate-pulse"
+            style={{
+              left: `${BASKET_RELATIVE_X * 100}%`,
+              top: `${BASKET_RELATIVE_Y * 100}%`,
+              transform: "translate(-50%, -50%)",
+            }}
+          >
+            <div className="w-8 h-8 rounded-full bg-yellow-400 opacity-50" />
+            <div className="absolute top-1/2 left-1/2 w-4 h-4 rounded-full bg-yellow-600 transform -translate-x-1/2 -translate-y-1/2" />
           </div>
         )}
       </div>
@@ -445,11 +475,12 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     useState(playersOnCourt);
   const [initialBallPosition, setInitialBallPosition] = useState(ballPosition);
 
-  // Ajoutez cet état au début du composant
   const [initialSetup, setInitialSetup] = useState<{
     players: typeof playersOnCourt;
     ball: typeof ballPosition;
   } | null>(null);
+
+  const [selectingShoot, setSelectingShoot] = useState(false);
 
   const calculateCourtSize = (
     containerWidth: number,
@@ -720,12 +751,41 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     }
   };
 
+  // Ajoutez cette fonction utilitaire
+  const findPlayerWithBall = (
+    players: any[],
+    ballPos: { x: number; y: number } | null
+  ) => {
+    if (!ballPos) return null;
+    return players.find(
+      (player) =>
+        Math.abs(player.x - ballPos.x + 22) < 5 &&
+        Math.abs(player.y - ballPos.y) < 5
+    );
+  };
+
+  const checkAllPlayersAndBallPresent = () => {
+    const allTeam1Present = team1Players.every((num) =>
+      playersOnCourt.some((p) => p.team === "team1" && p.num === num)
+    );
+    const allTeam2Present = team2Players.every((num) =>
+      playersOnCourt.some((p) => p.team === "team2" && p.num === num)
+    );
+    return allTeam1Present && allTeam2Present && ballPosition !== null;
+  };
+
   const handleValidateMovement = () => {
-    // Vérifications initiales
-    if (team1Players.length > 0 || team2Players.length > 0 || !ballPosition) {
+    if (!checkAllPlayersAndBallPresent()) {
       alert(
-        "Tous les joueurs doivent être sur le terrain et le ballon doit être présent pour valider une séquence."
+        "Tous les joueurs et le ballon doivent être sur le terrain pour valider une séquence."
       );
+      return;
+    }
+
+    const hasMovement =
+      arrows.length > 0 || dottedArrows.length > 0 || selectingShoot;
+    if (!hasMovement) {
+      alert("Aucun mouvement à valider.");
       return;
     }
 
@@ -738,46 +798,67 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         endX: player.x,
         endY: player.y,
       })),
-      ball: {
-        startX: ballPosition.x,
-        startY: ballPosition.y,
-        endX: ballPosition.x,
-        endY: ballPosition.y,
-      },
+      ball: ballPosition
+        ? {
+            startX: ballPosition.x,
+            startY: ballPosition.y,
+            endX: ballPosition.x,
+            endY: ballPosition.y,
+          }
+        : undefined,
       comment: "",
       audioComment: undefined,
     };
 
-    // Mise à jour des positions finales pour les mouvements
+    // Trouver le joueur qui a le ballon
+    const playerWithBall = findPlayerWithBall(playersOnCourt, ballPosition);
+
+    // Mettre à jour les positions des joueurs et du ballon
     arrows.forEach((arrow) => {
-      const playerToMove = newSequence.players.find(
-        (p) =>
-          Math.abs(p.startX - arrow.start.x) < 5 &&
-          Math.abs(p.startY - arrow.start.y) < 5
+      const player = newSequence.players.find(
+        (p) => p.startX === arrow.start.x && p.startY === arrow.start.y
       );
-      if (playerToMove) {
-        playerToMove.endX = arrow.end.x;
-        playerToMove.endY = arrow.end.y;
+      if (player) {
+        player.endX = arrow.end.x;
+        player.endY = arrow.end.y;
+
+        if (
+          playerWithBall &&
+          playerWithBall.id === player.id &&
+          newSequence.ball
+        ) {
+          newSequence.ball.endX = arrow.end.x + 22;
+          newSequence.ball.endY = arrow.end.y;
+        }
       }
     });
 
-    // Mise à jour de la position finale du ballon
-    if (dottedArrows.length > 0) {
+    if (dottedArrows.length > 0 && newSequence.ball) {
       const lastDottedArrow = dottedArrows[dottedArrows.length - 1];
-      newSequence.ball = newSequence.ball ?? {
-        startX: 0,
-        startY: 0,
-        endX: 0,
-        endY: 0,
-      };
       newSequence.ball.endX = lastDottedArrow.end.x + 22;
       newSequence.ball.endY = lastDottedArrow.end.y;
     }
 
-    // Ajout de la nouvelle séquence à la timeline
+    // Gérer le tir
+    if (selectingShoot && ballPosition) {
+      const basketPosition = calculateBasketPosition(
+        courtSize.width,
+        courtSize.height
+      );
+      newSequence.shoot = {
+        playerId: playerWithBall?.id ?? "",
+        targetX: basketPosition.x,
+        targetY: basketPosition.y,
+      };
+      if (newSequence.ball) {
+        newSequence.ball.endX = basketPosition.x;
+        newSequence.ball.endY = basketPosition.y;
+      }
+    }
+
     setTimeline((prevTimeline) => [...prevTimeline, newSequence]);
 
-    // Animation
+    // Déclenchement de l'animation
     setIsAnimating(true);
     setTimeout(() => {
       setPlayersOnCourt(
@@ -787,39 +868,30 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
           y: p.endY,
         }))
       );
-      setBallPosition({
-        x: newSequence.ball?.endX ?? ballPosition.x,
-        y: newSequence.ball?.endY ?? ballPosition.y,
-      });
+      if (newSequence.ball) {
+        setBallPosition({
+          x: newSequence.ball.endX,
+          y: newSequence.ball.endY,
+        });
+      }
       setIsAnimating(false);
       setArrows([]);
       setDottedArrows([]);
+      setSelectingShoot(false);
     }, 1000);
-
-    // Sauvegarde de la configuration initiale si c'est la première séquence
-    if (timeline.length === 0) {
-      setInitialSetup({
-        players: playersOnCourt,
-        ball: ballPosition,
-      });
-    }
   };
 
   const playTimeline = async () => {
     setIsPlayingTimeline(true);
 
-    // Réinitialiser à la position initiale
     if (initialSetup) {
       setPlayersOnCourt(initialSetup.players);
       setBallPosition(initialSetup.ball);
     }
 
-    // Attendre que le rendu initial soit fait
     await new Promise((resolve) => setTimeout(resolve, 500));
 
-    // Jouer chaque séquence de la timeline
     for (const sequence of timeline) {
-      // Réinitialiser les positions avant chaque séquence
       setPlayersOnCourt((prevPlayers) =>
         prevPlayers.map((player) => {
           const sequencePlayer = sequence.players.find(
@@ -834,10 +906,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         setBallPosition({ x: sequence.ball.startX, y: sequence.ball.startY });
       }
 
-      // Attendre un court instant pour que le rendu se fasse
       await new Promise((resolve) => setTimeout(resolve, 50));
 
-      // Animer vers les positions finales
       await new Promise<void>((resolve) => {
         setTimeout(() => {
           setPlayersOnCourt((prevPlayers) =>
@@ -857,8 +927,31 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         }, 1000);
       });
 
-      // Pause entre chaque séquence
       await new Promise((resolve) => setTimeout(resolve, 500));
+
+      // Animer le tir si présent
+      if (sequence.shoot) {
+        const basketPosition = calculateBasketPosition(
+          courtSize.width,
+          courtSize.height
+        );
+        await new Promise<void>((resolve) => {
+          setBallPosition((prevBall) => ({
+            x: prevBall!.x,
+            y: prevBall!.y - 20, // Légère élévation du ballon
+          }));
+          setTimeout(() => {
+            setBallPosition({
+              x: basketPosition.x,
+              y: basketPosition.y,
+            });
+            resolve();
+          }, 500);
+        });
+
+        // Petit délai après le tir
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
     }
 
     setIsPlayingTimeline(false);
@@ -1002,7 +1095,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   };
 
   return (
-    <DndProviderWithNoSSR backend={HTML5Backend}>
+    <DndProvider backend={HTML5Backend}>
       <div
         className={`h-screen bg-gray-900 overflow-hidden ${
           isPresentationMode ? "flex items-center justify-center" : ""
@@ -1091,7 +1184,10 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                     <ActionButton
                       onClick={handleValidateMovement}
                       disabled={
-                        arrows.length === 0 && dottedArrows.length === 0
+                        !checkAllPlayersAndBallPresent() ||
+                        (arrows.length === 0 &&
+                          dottedArrows.length === 0 &&
+                          !selectingShoot)
                       }
                       icon={<Check size={28} />}
                       title="Valider le mouvement"
@@ -1102,6 +1198,18 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                       icon={<BookOpen size={28} />}
                       title="Ma Bibliothèque"
                       description="Voir tous mes systèmes sauvegardés"
+                    />
+                    <ActionButton
+                      onClick={() => setSelectingShoot(!selectingShoot)}
+                      disabled={!ballPosition || isCourtEmpty}
+                      icon={<Target size={28} />}
+                      title="Tirer au panier"
+                      description={
+                        selectingShoot
+                          ? "Cliquez sur 'Valider' pour terminer la séquence par un tir"
+                          : "Activez pour terminer la séquence par un tir"
+                      }
+                      isActive={selectingShoot}
                     />
                   </div>
                 </div>
@@ -1345,6 +1453,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                 width={courtSize.width}
                 height={courtSize.height}
                 readOnly={readOnly}
+                selectingShoot={selectingShoot}
               />
             </div>
           </div>
@@ -1389,8 +1498,14 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
             <Minimize size={20} />
           </button>
         )}
+        {selectingShoot && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-10">
+            Mode tir activé. Cliquez sur "Valider" pour terminer la séquence par
+            un tir au panier.
+          </div>
+        )}
       </div>
-    </DndProviderWithNoSSR>
+    </DndProvider>
   );
 };
 
