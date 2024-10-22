@@ -118,7 +118,7 @@ export default function Home() {
             animate={{ opacity: 1 }}
             transition={{ delay: 0.7, duration: 1 }}
           >
-            Voici tous ce que nous proposons afin de vous aidez dans votre
+            Voici tous ce que nous proposons afin de vous aider dans votre
             coaching !
           </motion.p>
           <motion.div
