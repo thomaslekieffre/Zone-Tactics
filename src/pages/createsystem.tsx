@@ -1500,8 +1500,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         )}
         {selectingShoot && (
           <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-10">
-            Mode tir activé. Cliquez sur "Valider" pour terminer la séquence par
-            un tir au panier.
+            Mode tir activé. Cliquez sur &apos;Valider&apos; pour terminer la
+            séquence par un tir au panier.
           </div>
         )}
       </div>
