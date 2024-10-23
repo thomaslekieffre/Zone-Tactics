@@ -13,7 +13,7 @@ function useIsClient() {
 }
 
 function AdminPage() {
-  const { isSignedIn, user } = useUser();
+  const { user, isLoaded } = useUser();
   const isClient = useIsClient();
   const router = useRouter();
 
@@ -21,9 +21,24 @@ function AdminPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [isSettingRole, setIsSettingRole] = useState(false);
 
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    if (isLoaded && user) {
+      const checkAdminStatus = async () => {
+        await user.reload();
+        setIsAdmin(user.publicMetadata?.role === "Admin");
+      };
+      checkAdminStatus();
+    }
+  }, [isLoaded, user]);
+
+  if (!isLoaded) return <div>Chargement...</div>;
+  if (!isAdmin) return <div>Accès non autorisé</div>;
+
   console.log("User public metadata:", user?.publicMetadata);
 
-  if (isClient && (!isSignedIn || user?.publicMetadata?.role !== "Admin")) {
+  if (isClient && (!isLoaded || user?.publicMetadata?.role !== "Admin")) {
     router.push("/");
     return null;
   }

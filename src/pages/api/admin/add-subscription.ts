@@ -13,12 +13,7 @@ export default async function handler(
     return res.status(401).json({ message: "Non autorisé" });
   }
 
-  // Récupérer les informations complètes de l'utilisateur
   const user = await clerkClient.users.getUser(userId);
-
-  console.log("User public metadata (API):", user.publicMetadata);
-
-  // Vérifier si l'utilisateur a le rôle Admin
   const isAdminUser = user.publicMetadata?.role === "Admin";
 
   if (!isAdminUser) {
