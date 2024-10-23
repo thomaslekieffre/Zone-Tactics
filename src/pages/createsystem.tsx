@@ -1328,16 +1328,26 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                             </button>
                           </div>
                         </div>
-                        <input
-                          type="text"
+                        <textarea
                           value={sequence.comment}
                           onChange={(e) => {
                             const newTimeline = [...timeline];
                             newTimeline[index].comment = e.target.value;
                             setTimeline(newTimeline);
                           }}
-                          className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1"
+                          onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height = `${Math.min(
+                              target.scrollHeight,
+                              3 * 24
+                            )}px`;
+                          }}
+                          className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1 resize-none overflow-hidden"
                           placeholder="Ajouter un commentaire pour cette séquence..."
+                          rows={1}
+                          maxLength={200}
+                          style={{ minHeight: "24px", maxHeight: "72px" }}
                         />
                         {sequence.audioComment && (
                           <div className="mt-2">
