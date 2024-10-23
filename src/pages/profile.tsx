@@ -143,7 +143,7 @@ export default function Profile() {
             <div className="flex items-center">
               <Calendar className="mr-2" />
               <p>
-                <strong>Date d'inscription :</strong>{" "}
+                <strong>Date d&apos;inscription :</strong>{" "}
                 {new Date(user?.createdAt || "").toLocaleDateString()}
               </p>
             </div>
@@ -166,7 +166,7 @@ export default function Profile() {
           {subscriptionStatus === "active" && (
             <>
               <p className="mb-2">
-                <strong>Type d'abonnement :</strong> Premium
+                <strong>Type d&apos;abonnement :</strong> Premium
               </p>
 
               <button
@@ -180,12 +180,14 @@ export default function Profile() {
           )}
           {subscriptionStatus !== "active" && (
             <>
-              <p className="mb-4">Vous n'avez pas d'abonnement actif.</p>
+              <p className="mb-4">
+                Vous n&apos;avez pas d&apos;abonnement actif.
+              </p>
               <Link
                 href="/pricing"
                 className="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 transition duration-300"
               >
-                S'abonner
+                S&apos;abonner
               </Link>
             </>
           )}

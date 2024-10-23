@@ -15,7 +15,6 @@ export default async function handler(
     const user = await clerkClient.users.updateUser(userId, {
       publicMetadata: { role: "Admin" },
     });
-
     res.status(200).json({ message: "Rôle Admin défini avec succès", user });
   } catch (error) {
     console.error("Erreur lors de la définition du rôle Admin:", error);
