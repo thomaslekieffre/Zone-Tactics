@@ -39,7 +39,10 @@ const SharedSystem = () => {
     if (router.isReady && id) {
       fetch(`/api/get-shared-system?id=${id}`)
         .then((response) => response.json())
-        .then((data: SystemData) => setSystemData(data))
+        .then((data: SystemData) => {
+          console.log("Données du système partagé reçues:", data);
+          setSystemData(data);
+        })
         .catch((error) =>
           console.error("Erreur lors de la récupération du système:", error)
         );
@@ -50,28 +53,29 @@ const SharedSystem = () => {
     return <div>Chargement...</div>;
   }
 
-  if (isMobile && !isLandscape) {
-    return (
-      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center">
-        <div className="text-center p-4">
-          <h1 className="text-2xl font-bold mb-4">
-            Veuillez tourner votre appareil
-          </h1>
-          <p>
-            Pour une meilleure expérience, veuillez utiliser votre appareil en
-            mode paysage.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
   return (
-    <CreateSystem
-      initialData={systemData}
-      readOnly={true}
-      systemName={systemData?.name}
-    />
+    <div className={`min-h-screen bg-gray-900 ${isMobile ? "p-2" : "p-4"}`}>
+      {isMobile && !isLandscape ? (
+        <div className="text-white flex items-center justify-center h-screen">
+          <div className="text-center p-4">
+            <h1 className="text-2xl font-bold mb-4">
+              Veuillez tourner votre appareil
+            </h1>
+            <p>
+              Pour une meilleure expérience, veuillez utiliser votre appareil en
+              mode paysage.
+            </p>
+          </div>
+        </div>
+      ) : (
+        <CreateSystem
+          initialData={systemData}
+          readOnly={true}
+          systemName={systemData.name}
+          isMobile={isMobile}
+        />
+      )}
+    </div>
   );
 };
 
