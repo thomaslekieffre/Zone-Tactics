@@ -92,11 +92,11 @@ function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
-      <h1 className="text-3xl font-bold mb-8">Page d'administration</h1>
+      <h1 className="text-3xl font-bold mb-8">Page d&apos;administration</h1>
       <form onSubmit={handleAddSubscription} className="max-w-md">
         <div className="mb-4">
           <label htmlFor="userId" className="block mb-2">
-            ID de l'utilisateur :
+            ID de l&apos;utilisateur :
           </label>
           <input
             type="text"
