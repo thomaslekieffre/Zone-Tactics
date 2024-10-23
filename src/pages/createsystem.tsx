@@ -31,6 +31,7 @@ import { useSubscription } from "../hooks/useSubscription";
 import { withPremiumAccess } from "@/components/withSubscription";
 import { DndProvider } from "react-dnd";
 import Link from "next/link";
+import { useIsMobile } from "../hooks/useIsMobile";
 
 export type LocalAnimationSequence = {
   id: string;
@@ -397,8 +398,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   initialData,
   readOnly = false,
   systemName: initialSystemName = "",
-  isMobile = false,
 }) => {
+  const isMobile = useIsMobile();
   const subscriptionStatus = useSubscription();
   const { user } = useUser();
   const router = useRouter();
@@ -542,37 +543,48 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const updateCourtSize = useCallback(() => {
     if (courtContainerRef.current) {
       const containerRect = courtContainerRef.current.getBoundingClientRect();
-      const newSize = calculateCourtSize(
-        Math.max(containerRect.width, COURT_WIDTH),
-        Math.max(containerRect.height, COURT_HEIGHT)
-      );
-      setCourtSize(newSize);
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+      const aspectRatio = COURT_ASPECT_RATIO;
+
+      let width, height;
+
+      if (isMobile) {
+        // En mode mobile, utilisez toute la largeur disponible
+        width = containerWidth;
+        height = width / aspectRatio;
+
+        // Si la hauteur dépasse la hauteur du conteneur, ajustez en conséquence
+        if (height > containerHeight) {
+          height = containerHeight;
+          width = height * aspectRatio;
+        }
+      } else {
+        // En mode desktop, gardez le comportement actuel
+        if (containerWidth / containerHeight > aspectRatio) {
+          height = containerHeight * 0.95;
+          width = height * aspectRatio;
+        } else {
+          width = containerWidth * 0.95;
+          height = width / aspectRatio;
+        }
+      }
+
+      setCourtSize({ width, height });
     }
-  }, [isPresentationMode, courtContainerRef]);
+  }, [isMobile]);
 
   useEffect(() => {
-    setIsMounted(true);
-    return () => setIsMounted(false);
-  }, [setIsMounted]);
+    updateCourtSize();
+    window.addEventListener("resize", updateCourtSize);
+    return () => window.removeEventListener("resize", updateCourtSize);
+  }, [updateCourtSize]);
 
   useEffect(() => {
     if (isMounted) {
       updateCourtSize();
     }
-  }, [isMounted]);
-
-  useEffect(() => {
-    const handleResize = () => {
-      if (courtContainerRef.current) {
-        updateCourtSize();
-      }
-    };
-
-    window.addEventListener("resize", handleResize);
-    handleResize();
-
-    return () => window.removeEventListener("resize", handleResize);
-  }, [updateCourtSize]);
+  }, [isMounted, updateCourtSize]);
 
   useEffect(() => {
     updateCourtSize();
@@ -1155,37 +1167,467 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   return (
     <DndProvider backend={HTML5Backend}>
       <div
-        className={`flex flex-col ${isMobile ? "h-screen" : "min-h-screen"}`}
+        className={`h-screen bg-gray-900 overflow-hidden ${
+          isPresentationMode ? "flex items-center justify-center" : ""
+        }`}
       >
-        <header
-          className={`bg-indigo-600 text-white ${isMobile ? "p-2" : "p-4"}`}
-        >
-          <div className="flex justify-between items-center">
-            <button onClick={handleGoBack} className="back-button">
-              <ArrowLeft size={24} />
-            </button>
-            <h1 className={`font-bold ${isMobile ? "text-lg" : "text-2xl"}`}>
-              {systemName}
-            </h1>
-            <div className="w-6" /> {/* Espace pour équilibrer le layout */}
-          </div>
-        </header>
-
+        {!isPresentationMode && (
+          <nav className="bg-blue-800 text-white flex justify-between p-4">
+            <div className="flex items-center space-x-4">
+              <button onClick={handleGoBack} className="back-button p-2">
+                <ArrowLeft size={20} />
+              </button>
+              {readOnly ? (
+                <input
+                  type="text"
+                  value={systemName}
+                  readOnly
+                  className="bg-blue-700 text-white rounded px-2 py-1 cursor-not-allowed"
+                />
+              ) : (
+                <input
+                  type="text"
+                  value={systemName}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 22) {
+                      setSystemName(e.target.value);
+                    }
+                  }}
+                  placeholder="Nom du système"
+                  className="bg-blue-700 text-white rounded px-2 py-1"
+                  maxLength={22}
+                />
+              )}
+            </div>
+            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize gap-2">
+              {user?.username}
+              <Link
+                href="/profile"
+                className="text-white hover:text-blue-300 transition-colors"
+              >
+                <User size={20} />
+              </Link>
+              <UserButton
+                afterSignOutUrl="/"
+                appearance={{
+                  elements: {
+                    avatarBox: "ml-4 w-10 h-10",
+                    userButtonAvatarBox: "w-10 h-10",
+                  },
+                }}
+              />
+            </div>
+          </nav>
+        )}
         <main
-          className={`flex-grow flex ${isMobile ? "flex-col" : "flex-row"}`}
+          className={`flex ${
+            isMobile ? "flex-col" : "flex-row"
+          } h-screen bg-gray-900`}
         >
+          {!isPresentationMode && !readOnly && (
+            <div
+              className={`${
+                isMobile ? "w-full h-1/2" : "w-1/4"
+              } bg-blue-800 p-4 text-white overflow-y-auto`}
+            >
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Actions :</h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={() => setSelectingPlayerForArrow(true)}
+                      disabled={isCourtEmpty}
+                      icon={<ArrowRight size={28} />}
+                      title="Ajouter une flèche"
+                      description="Cliquez pour ajouter une flèche à partir d'un joueur sur le terrain (= un déplacement)"
+                      isActive={selectingPlayerForArrow}
+                    />
+                    <ActionButton
+                      onClick={handleDottedArrowClick}
+                      disabled={!ballPosition}
+                      icon={<CgBorderStyleDotted size={28} />}
+                      title="Ajouter une flèche en pointillés"
+                      description="Cliquez pour ajouter une flèche en pointillés à partir du ballon (= une passe)"
+                      isActive={selectingDottedArrow}
+                    />
+                    {!ballPosition && (
+                      <ActionButton
+                        onClick={handleBasketballClick}
+                        disabled={isCourtEmpty}
+                        icon={<TfiBasketball size={28} />}
+                        title="Placer le ballon"
+                        description="Cliquez pour placer le ballon sur un joueur"
+                        isActive={selectingPlayerForBall}
+                      />
+                    )}
+                    <ActionButton
+                      onClick={handleUndo}
+                      disabled={isCourtEmpty}
+                      icon={<GrReturn size={28} />}
+                      title="Annuler la dernière action"
+                      description="Cliquez pour annuler la dernière action effectuée"
+                    />
+                    <ActionButton
+                      onClick={handleValidateMovement}
+                      disabled={
+                        !checkAllPlayersAndBallPresent() ||
+                        (arrows.length === 0 &&
+                          dottedArrows.length === 0 &&
+                          !selectingShoot)
+                      }
+                      icon={<Check size={28} />}
+                      title="Valider le mouvement"
+                      description="Cliquez pour ajouter la séquence à la timeline"
+                    />
+
+                    <ActionButton
+                      onClick={() => setSelectingShoot(!selectingShoot)}
+                      disabled={!ballPosition || isCourtEmpty}
+                      icon={<Target size={28} />}
+                      title="Tirer au panier"
+                      description={
+                        selectingShoot
+                          ? "Cliquez sur 'Valider' pour terminer la séquence par un tir"
+                          : "Activez pour terminer la séquence par un tir"
+                      }
+                      isActive={selectingShoot}
+                    />
+
+                    <ActionButton
+                      onClick={goToLibrary}
+                      icon={<BookOpen size={28} />}
+                      title="Ma Bibliothèque"
+                      description="Voir tous mes systèmes sauvegardés"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
+                  <div className="space-y-2">
+                    {timeline.map((sequence, index) => (
+                      <div
+                        key={index}
+                        className={`bg-blue-700 p-2 rounded ${
+                          index === timeline.length - 1
+                            ? "border-2 border-yellow-400"
+                            : ""
+                        }`}
+                      >
+                        <div className="flex justify-between items-center">
+                          <div>Séquence {index + 1}</div>
+                          <div className="flex space-x-2">
+                            {!isRecordingAudio ||
+                            currentRecordingIndex !== index ? (
+                              <button
+                                onClick={() => startAudioRecording(index)}
+                                className="bg-green-500 text-white p-2 rounded"
+                                title="Enregistrer un commentaire audio"
+                              >
+                                <Mic size={20} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={stopAudioRecording}
+                                className="bg-red-500 text-white p-2 rounded animate-pulse"
+                                title="Arrêter l'enregistrement"
+                              >
+                                <MicOff size={20} />
+                              </button>
+                            )}
+                            <button
+                              onClick={removeSequence}
+                              className={`p-2 rounded ${
+                                index === timeline.length - 1
+                                  ? "bg-red-500 text-white hover:bg-red-600"
+                                  : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              }`}
+                              title={
+                                index === timeline.length - 1
+                                  ? "Supprimer cette séquence"
+                                  : "Seule la dernière séquence peut être supprimée"
+                              }
+                              disabled={index !== timeline.length - 1}
+                            >
+                              <Trash2 size={20} />
+                            </button>
+                          </div>
+                        </div>
+                        <textarea
+                          value={sequence.comment}
+                          onChange={(e) => {
+                            const newTimeline = [...timeline];
+                            newTimeline[index].comment = e.target.value;
+                            setTimeline(newTimeline);
+                          }}
+                          onInput={(e) => {
+                            const target = e.target as HTMLTextAreaElement;
+                            target.style.height = "auto";
+                            target.style.height = `${Math.min(
+                              target.scrollHeight,
+                              3 * 24
+                            )}px`;
+                          }}
+                          className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1 resize-none overflow-hidden"
+                          placeholder="Ajouter un commentaire pour cette séquence..."
+                          rows={1}
+                          maxLength={200}
+                          style={{ minHeight: "24px", maxHeight: "72px" }}
+                        />
+                        {sequence.audioComment && (
+                          <div className="mt-2">
+                            <audio
+                              src={sequence.audioComment}
+                              controls
+                              className="w-full h-8"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Équipe 1 :</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {team1Players.map((num) => (
+                      <PlayerButton
+                        key={num}
+                        num={num}
+                        team="team1"
+                        onDrop={() => handlePlayerDrop(num, "team1")}
+                        isOnCourt={playersOnCourt.some(
+                          (player) =>
+                            player.num === num && player.team === "team1"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Équipe 2 :</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {team2Players.map((num) => (
+                      <PlayerButton
+                        key={num}
+                        num={num}
+                        team="team2"
+                        onDrop={() => handlePlayerDrop(num, "team2")}
+                        isOnCourt={playersOnCourt.some(
+                          (player) =>
+                            player.num === num && player.team === "team2"
+                        )}
+                      />
+                    ))}
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Animation :</h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={playTimeline}
+                      disabled={timeline.length === 0 || isPlayingTimeline}
+                      icon={<Play size={28} />}
+                      title="Jouer la timeline"
+                      description="Cliquez pour jouer toutes les séquences d'animation"
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">
+                    Plein écran et enregistrement :
+                  </h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={togglePresentationMode}
+                      icon={<Maximize size={28} />}
+                      title="Mode présentation"
+                      description="Passer en mode présentation pour l'enregistrement"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Instructions :</h3>
+                  <ul className="list-disc pl-5 space-y-2">
+                    <li>Les joueurs bleus sont votre équipe.</li>
+                    <li>Les joueurs rouges sont l&apos;équipe adverse.</li>
+                    <li>
+                      Vous ne pouvez faire des passes qu&apos;entre les joueurs
+                      bleus.
+                    </li>
+                    <li>Utilisez les flèches pleines pour les déplacements.</li>
+                    <li>Utilisez les flèches en pointillés pour les passes.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Partage :</h3>
+                  <div className="space-y-2">
+                    <ActionButton
+                      onClick={generateShareLink}
+                      icon={<Share2 size={28} />}
+                      title="Génrer un lien de partage"
+                      description="Créez un lien pour partager votre système avec d'autres personnes"
+                    />
+                    {shareLink && (
+                      <div className="mt-2">
+                        <p className="text-white mb-1">
+                          Système partagé : {systemName}
+                        </p>
+                        <input
+                          type="text"
+                          value={shareLink}
+                          readOnly
+                          className="w-full bg-blue-700 text-white rounded px-2 py-1"
+                        />
+                        <button
+                          onClick={copyShareLink}
+                          className="mt-1 bg-blue-500 text-white px-2 py-1 rounded"
+                        >
+                          Copier le lien
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+          {!isPresentationMode && readOnly && (
+            <div
+              className={`${
+                isMobile ? "w-full h-1/2" : "w-1/4"
+              } bg-blue-800 p-4 text-white overflow-y-auto`}
+            >
+              <h3 className="text-xl font-semibold mb-4">
+                Système partagé : {systemName}
+              </h3>
+              <p className="mb-4">
+                Ce système est en mode lecture seule. Vous pouvez le visualiser
+                mais pas le modifier.
+              </p>
+              <div className="space-y-2 mb-4">
+                <ActionButton
+                  onClick={playTimeline}
+                  disabled={timeline.length === 0 || isPlayingTimeline}
+                  icon={<Play size={28} />}
+                  title="Jouer la timeline"
+                  description="Cliquez pour jouer toutes les séquences d'animation"
+                />
+                <ActionButton
+                  onClick={togglePresentationMode}
+                  icon={<Maximize size={28} />}
+                  title="Mode présentation"
+                  description="Passer en mode présentation pour l'enregistrement"
+                />
+              </div>
+              <div>
+                <h3 className="text-xl font-semibold mb-4">Timeline :</h3>
+                <div className="space-y-2">
+                  {timeline.map((sequence, index) => (
+                    <div key={index} className="bg-blue-700 p-2 rounded">
+                      <div>Séquence {index + 1}</div>
+                      <p className="mt-1 w-full bg-blue-600 text-white rounded px-2 py-1">
+                        {sequence.comment}
+                      </p>
+                      {sequence.audioComment && (
+                        <div className="mt-2">
+                          <audio
+                            src={sequence.audioComment}
+                            controls
+                            className="h-8 w-full"
+                          />
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
           <div
             className={`${
-              isMobile ? "w-full" : "w-1/4"
-            } bg-indigo-800 text-white p-4`}
+              isMobile ? "w-full h-1/2" : "flex-grow"
+            } flex items-center justify-center bg-gray-900 overflow-auto`}
           >
-            {/* Contenu de la barre latérale */}
-          </div>
-
-          <div className={`${isMobile ? "w-full" : "w-3/4"} bg-gray-900`}>
-            {/* Contenu principal (terrain de basket, etc.) */}
+            <div
+              ref={courtContainerRef}
+              className="relative"
+              style={{
+                width: `${courtSize.width}px`,
+                height: `${courtSize.height}px`,
+                maxWidth: "100%",
+                maxHeight: "100%",
+              }}
+            >
+              <Court
+                players={playersOnCourt}
+                setPlayers={setPlayersOnCourt}
+                onPlayerClick={handlePlayerClick}
+                ballPosition={ballPosition}
+                selectingPlayerForBall={selectingPlayerForBall}
+                selectingPlayerForArrow={selectingPlayerForArrow}
+                onCourtClick={handleCourtClick}
+                arrowStart={arrowStart}
+                arrows={arrows}
+                selectingDottedArrow={selectingDottedArrow}
+                dottedArrows={dottedArrows}
+                isAnimating={isAnimating}
+                animatingPlayer={animatingPlayer}
+                isPlayingTimeline={isPlayingTimeline}
+                width={courtSize.width}
+                height={courtSize.height}
+                readOnly={readOnly}
+                selectingShoot={selectingShoot}
+              />
+            </div>
           </div>
         </main>
+        {isPresentationMode && (
+          <div className="absolute top-4 left-4 flex space-x-4">
+            <ActionButton
+              onClick={togglePresentationMode}
+              icon={<Minimize size={28} />}
+              title="Quitter le mode présentation"
+              description="Cliquez pour revenir à l'interface normale"
+            />
+            {!isRecording ? (
+              <ActionButton
+                onClick={startRecording}
+                icon={<Video size={28} />}
+                title="Démarrer l'enregistrement"
+                description="Cliquez pour commencer à enregistrer votre système en vidéo"
+              />
+            ) : (
+              <ActionButton
+                onClick={stopRecording}
+                icon={<StopCircle size={28} />}
+                title="Arrêter l'enregistrement"
+                description="Cliquez pour arrêter l'enregistrement et télécharger la vidéo"
+              />
+            )}
+            <ActionButton
+              onClick={playTimeline}
+              disabled={timeline.length === 0 || isPlayingTimeline}
+              icon={<Play size={28} />}
+              title="Jouer la timeline"
+              description="Cliquez pour jouer toutes les séquences d'animation"
+            />
+          </div>
+        )}
+        {isPresentationMode && (
+          <button
+            className="absolute top-4 right-4 bg-blue-500 text-te p-2 rounded"
+            onClick={togglePresentationMode}
+          >
+            <Minimize size={20} />
+          </button>
+        )}
+        {selectingShoot && (
+          <div className="absolute top-4 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-lg shadow-lg z-10">
+            Mode tir activé. Cliquez sur &apos;Valider&apos; pour terminer la
+            séquence par un tir au panier.
+          </div>
+        )}
       </div>
     </DndProvider>
   );
