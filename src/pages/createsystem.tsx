@@ -1183,9 +1183,14 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                 <input
                   type="text"
                   value={systemName}
-                  onChange={(e) => setSystemName(e.target.value)}
+                  onChange={(e) => {
+                    if (e.target.value.length <= 20) {
+                      setSystemName(e.target.value);
+                    }
+                  }}
                   placeholder="Nom du système"
                   className="bg-blue-700 text-white rounded px-2 py-1"
+                  maxLength={22}
                 />
               )}
             </div>
