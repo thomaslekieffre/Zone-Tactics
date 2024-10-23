@@ -28,7 +28,7 @@ export default function Footer() {
             rel="noopener noreferrer"
             className="block hover:text-blue-600 transition-colors duration-300"
           >
-            Mail Projet : zonetactics@zonet.fr
+            Mail Projet : contactdev@zonetactics.fr
           </a>
           <p className="mt-4">© 2024 - ZoneTactics - Tous droits réservés</p>
         </div>
