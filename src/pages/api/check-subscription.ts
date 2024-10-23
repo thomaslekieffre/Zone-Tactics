@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from "next";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { getAuth } from "@clerk/nextjs/server";
+import stripe from "@/lib/stripe";
 
 export default async function handler(
   req: NextApiRequest,
@@ -19,6 +20,7 @@ export default async function handler(
     try {
       const status = await getSubscriptionStatus(userId);
       console.log(`Statut d'abonnement final pour ${userId}:`, status);
+
       res.status(200).json({ status });
     } catch (error) {
       console.error("Erreur lors de la vérification de l'abonnement:", error);

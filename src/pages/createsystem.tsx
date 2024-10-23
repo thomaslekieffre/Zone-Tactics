@@ -16,6 +16,7 @@ import {
   Share2,
   BookOpen,
   Target,
+  User,
 } from "react-feather";
 import { TfiBasketball } from "react-icons/tfi";
 import { CgBorderStyleDotted } from "react-icons/cg";
@@ -1184,7 +1185,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                   type="text"
                   value={systemName}
                   onChange={(e) => {
-                    if (e.target.value.length <= 20) {
+                    if (e.target.value.length <= 22) {
                       setSystemName(e.target.value);
                     }
                   }}
@@ -1194,8 +1195,14 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                 />
               )}
             </div>
-            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize">
+            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize gap-6">
               {user?.username}
+              <Link
+                href="/profile"
+                className="text-white hover:text-blue-300 transition-colors"
+              >
+                <User size={20} />
+              </Link>
               <UserButton
                 afterSignOutUrl="/"
                 appearance={{
