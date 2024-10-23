@@ -126,7 +126,6 @@ function AdminPage() {
   );
 }
 
-// Utiliser dynamic pour charger le composant côté client uniquement
 export default dynamic(() => Promise.resolve(AdminPage), {
   ssr: false,
 });
