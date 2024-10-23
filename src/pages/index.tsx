@@ -18,13 +18,13 @@ export default function Home() {
     <div className="flex flex-col min-h-screen bg-bleu">
       <Header />
       <motion.div
-        className="flex flex-col items-center text-center p-8 mt-8"
+        className="flex flex-col items-center text-center p-4 sm:p-8 mt-4 sm:mt-8"
         initial={{ opacity: 0, y: -50 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8 }}
       >
         <motion.button
-          className="bg-transparent text-white border border-white py-2 px-4 rounded-full mb-8 cursor-default"
+          className="bg-transparent text-white border border-white py-2 px-4 rounded-full mb-4 sm:mb-8 cursor-default text-sm sm:text-base"
           animate={{ scale: [1, 1.1, 1] }}
           transition={{ repeat: Infinity, repeatType: "loop", duration: 3 }}
           whileTap={{ scale: 0.95 }}
@@ -32,7 +32,7 @@ export default function Home() {
           Découvrez le nouvel indispensable du coach !
         </motion.button>
         <motion.h1
-          className="text-white text-7xl font-medium mb-8 w-9/12"
+          className="text-white text-3xl sm:text-5xl md:text-7xl font-medium mb-4 sm:mb-8 w-full sm:w-9/12"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3, duration: 1 }}
@@ -40,7 +40,7 @@ export default function Home() {
           Le nouveau moyen de créer et d&apos;expliquer ses tactiques
         </motion.h1>
         <motion.p
-          className="text-white text-lg max-w-2xl mb-8"
+          className="text-white text-base sm:text-lg max-w-2xl mb-4 sm:mb-8"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.5, duration: 1 }}
@@ -49,12 +49,12 @@ export default function Home() {
           tactiques grâce à des animations rapides et fluides très simples à
           créer et à partager !
         </motion.p>
-        <motion.div className="space-x-4">
+        <motion.div className="space-y-4 sm:space-y-0 sm:space-x-4 flex flex-col sm:flex-row">
           {isSignedIn ? (
             <>
               <Link href="/createsystem">
                 <motion.button
-                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
+                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg w-full sm:w-auto"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -63,7 +63,7 @@ export default function Home() {
               </Link>
               <Link href="/pricing">
                 <motion.button
-                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full"
+                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full w-full sm:w-auto"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -75,7 +75,7 @@ export default function Home() {
             <>
               <SignInButton mode="modal">
                 <motion.button
-                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg"
+                  className="bg-white text-black py-2 px-4 rounded-full shadow-lg w-full sm:w-auto"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
@@ -84,7 +84,7 @@ export default function Home() {
               </SignInButton>
               <Link href="/pricing">
                 <motion.button
-                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full"
+                  className="bg-transparent text-white border border-white py-2 px-4 rounded-full w-full sm:w-auto"
                   whileHover={{ scale: 1.1 }}
                   whileTap={{ scale: 0.95 }}
                 >
