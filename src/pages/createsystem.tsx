@@ -1195,7 +1195,7 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
                 />
               )}
             </div>
-            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize gap-6">
+            <div className="hidden md:flex items-center space-x-4 px-2 mr-8 capitalize gap-2">
               {user?.username}
               <Link
                 href="/profile"

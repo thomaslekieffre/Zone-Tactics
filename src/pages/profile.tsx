@@ -204,12 +204,12 @@ export default function Profile() {
                 placeholder="Mot de passe actuel"
                 value={currentPassword}
                 onChange={(e) => setCurrentPassword(e.target.value)}
-                className="w-full p-2 bg-gray-700 rounded pr-10"
+                className="w-1/2 p-2 bg-gray-700 rounded pr-10"
               />
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("current")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-1/2 pr-3 flex items-center"
               >
                 {showCurrentPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -220,12 +220,12 @@ export default function Profile() {
                 placeholder="Nouveau mot de passe"
                 value={newPassword}
                 onChange={(e) => setNewPassword(e.target.value)}
-                className="w-full p-2 bg-gray-700 rounded pr-10"
+                className="w-1/2 p-2 bg-gray-700 rounded pr-10"
               />
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("new")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-1/2 pr-3 flex items-center"
               >
                 {showNewPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
@@ -236,12 +236,12 @@ export default function Profile() {
                 placeholder="Confirmer le nouveau mot de passe"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full p-2 bg-gray-700 rounded pr-10"
+                className="w-1/2 p-2 bg-gray-700 rounded pr-10"
               />
               <button
                 type="button"
                 onClick={() => togglePasswordVisibility("confirm")}
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
+                className="absolute inset-y-0 right-1/2 pr-3 flex items-center"
               >
                 {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
               </button>
