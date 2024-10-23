@@ -36,6 +36,6 @@ export default async function handler(
       res.status(500).json({ error: "Erreur interne du serveur" });
     }
   } else {
-    res.status(405).end();
+    res.status(405).send("Méthode non autorisée");
   }
 }
