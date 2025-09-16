@@ -44,23 +44,36 @@ export default function Pricing() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-900 text-white py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-900 text-white py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-3xl mx-auto">
-        <div className="bg-gray-800 rounded-lg shadow-xl p-8 border border-blue-500 mb-8">
-          <h2 className="text-3xl font-bold mb-4 text-center text-blue-300">
+        {/* Lien de retour */}
+        <div className="mb-6">
+          <button
+            onClick={() => window.history.back()}
+            className="flex items-center text-gray-400 hover:text-white transition-colors"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            Retour
+          </button>
+        </div>
+
+        <div className="bg-gray-800 rounded-lg shadow-xl p-4 sm:p-6 md:p-8 border border-blue-500 mb-8">
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-center text-blue-300">
             {PLAN.name}
           </h2>
-          <p className="text-4xl font-bold mb-6 text-center">
+          <p className="text-3xl sm:text-4xl font-bold mb-6 text-center">
             5€{" "}
-            <span className="text-2xl font-normal text-gray-400">/ mois</span>
+            <span className="text-xl sm:text-2xl font-normal text-gray-400">/ mois</span>
           </p>
-          <ul className="mb-8 space-y-4">
+          <ul className="mb-6 sm:mb-8 space-y-3 sm:space-y-4">
             {PLAN.features.map((feature, index) => {
               const Icon = featureIcons[index % featureIcons.length];
               return (
-                <li key={index} className="flex items-center">
-                  <Icon className="h-6 w-6 text-green-400 mr-3" />
-                  <span className="text-lg">{feature}</span>
+                <li key={index} className="flex items-start sm:items-center">
+                  <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-green-400 mr-3 mt-0.5 sm:mt-0 flex-shrink-0" />
+                  <span className="text-sm sm:text-base lg:text-lg">{feature}</span>
                 </li>
               );
             })}

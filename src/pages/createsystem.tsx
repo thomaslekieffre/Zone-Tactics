@@ -469,65 +469,193 @@ const COURT_WIDTH = 1200;
 const COURT_HEIGHT = 640;
 const COURT_ASPECT_RATIO = COURT_WIDTH / COURT_HEIGHT;
 
+// Composant pour l'affichage mobile en mode portrait
+const MobileLandscapePrompt = () => (
+  <div className="flex items-center justify-center h-screen bg-gray-900 text-white p-4">
+    <div className="text-center">
+      <h1 className="text-2xl font-bold mb-4">
+        Veuillez tourner votre appareil
+      </h1>
+      <p>
+        Pour une meilleure expérience, utilisez votre appareil en mode
+        paysage.
+      </p>
+    </div>
+  </div>
+);
+
+// Composant pour l'affichage mobile optimisé
+const MobileCreateSystem = ({
+  subscriptionStatus,
+  user,
+  router
+}: {
+  subscriptionStatus: any;
+  user: any;
+  router: any;
+}) => {
+  if (subscriptionStatus === "loading") {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <p className="text-xl">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Connexion requise</h1>
+          <p className="mb-4">Vous devez être connecté pour accéder au créateur de tactiques.</p>
+          <button
+            onClick={() => router.push("/")}
+            className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors"
+          >
+            Retour à l&apos;accueil
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (subscriptionStatus !== "active") {
+    return (
+      <div className="min-h-screen bg-gray-900 text-white flex items-center justify-center p-4">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-4">Abonnement requis</h1>
+          <p className="mb-4">Un abonnement actif est nécessaire pour créer des tactiques.</p>
+          <div className="space-y-3">
+            <button
+              onClick={() => router.push("/pricing")}
+              className="block w-full bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-colors"
+            >
+              Voir les abonnements
+            </button>
+            <button
+              onClick={() => router.push("/library")}
+              className="block w-full bg-gray-600 hover:bg-gray-700 px-6 py-2 rounded-lg transition-colors"
+            >
+              Voir ma bibliothèque
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-900 text-white">
+      {/* En-tête mobile */}
+      <div className="bg-gray-800 p-4 shadow-lg">
+        <div className="flex items-center justify-between">
+          <button
+            onClick={() => router.push("/")}
+            className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h1 className="text-lg font-bold">Créateur de Tactiques</h1>
+          <button
+            onClick={() => router.push("/library")}
+            className="p-2 rounded-lg bg-gray-700 hover:bg-gray-600 transition-colors"
+          >
+            <BookOpen size={20} />
+          </button>
+        </div>
+      </div>
+
+      {/* Message d'information mobile */}
+      <div className="p-4">
+        <div className="bg-blue-900 bg-opacity-50 border border-blue-600 rounded-lg p-4 mb-4">
+          <h2 className="text-lg font-bold mb-2 text-blue-300">Mode Mobile Simplifié</h2>
+          <p className="text-sm mb-3">
+            Sur mobile, vous pouvez visualiser vos tactiques existantes.
+            Pour créer et éditer des tactiques, utilisez un ordinateur pour une expérience complète.
+          </p>
+          <div className="text-xs text-gray-300">
+            💡 Conseil : Tournez votre appareil en mode paysage pour une meilleure visualisation
+          </div>
+        </div>
+
+        {/* Actions rapides */}
+        <div className="grid grid-cols-1 gap-4">
+          <button
+            onClick={() => router.push("/library")}
+            className="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg border border-gray-600 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <BookOpen size={24} className="text-blue-400" />
+              <div className="text-left">
+                <h3 className="font-semibold">Ma Bibliothèque</h3>
+                <p className="text-sm text-gray-400">Voir mes tactiques sauvegardées</p>
+              </div>
+            </div>
+          </button>
+
+          <button
+            onClick={() => window.location.href = `${window.location.origin}/createsystem`}
+            className="bg-gray-800 hover:bg-gray-700 p-4 rounded-lg border border-gray-600 transition-colors"
+          >
+            <div className="flex items-center space-x-3">
+              <Target size={24} className="text-green-400" />
+              <div className="text-left">
+                <h3 className="font-semibold">Version Desktop</h3>
+                <p className="text-sm text-gray-400">Ouvrir en mode création complète</p>
+              </div>
+            </div>
+          </button>
+
+          <div className="bg-gray-800 p-4 rounded-lg border border-gray-600">
+            <div className="flex items-center space-x-3">
+              <User size={24} className="text-purple-400" />
+              <div className="text-left">
+                <h3 className="font-semibold">Compte</h3>
+                <p className="text-sm text-gray-400">{user.emailAddresses?.[0]?.emailAddress || user.username}</p>
+                <p className="text-xs text-green-400">Abonnement actif</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Aide */}
+        <div className="mt-6 p-4 bg-gray-800 rounded-lg border border-gray-600">
+          <h3 className="font-semibold mb-2">Besoin d&apos;aide ?</h3>
+          <p className="text-sm text-gray-400 mb-3">
+            Zone Tactics est optimisé pour desktop. Pour créer des tactiques détaillées,
+            nous recommandons d&apos;utiliser un ordinateur ou une tablette.
+          </p>
+          <button
+            onClick={() => window.open("mailto:contactdev@zonetactics.fr", "_blank")}
+            className="text-blue-400 text-sm hover:text-blue-300 transition-colors"
+          >
+            Contacter le support →
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const CreateSystem: React.FC<CreateSystemProps> = ({
   initialData,
   readOnly = false,
   systemName: initialSystemName = "",
   isMobile = false,
 }) => {
+  // Tous les hooks au début du composant
   const subscriptionStatus = useSubscription();
   const { user } = useUser();
   const router = useRouter();
   const handleGoBack = useCallback(() => {
     window.location.href = "/";
   }, []);
+
   const [systemName, setSystemName] = useState(initialSystemName);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isLandscape, setIsLandscape] = useState(true);
-
-  useEffect(() => {
-    const checkOrientation = () => {
-      setIsLandscape(window.innerWidth > window.innerHeight);
-    };
-
-    checkOrientation();
-    window.addEventListener("resize", checkOrientation);
-
-    return () => {
-      window.removeEventListener("resize", checkOrientation);
-    };
-  }, []);
-
-  if (isMobile && !isLandscape) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">
-            Veuillez tourner votre appareil
-          </h1>
-          <p>
-            Pour une meilleure expérience, utilisez votre appareil en mode
-            paysage.
-          </p>
-        </div>
-      </div>
-    );
-  }
-
-  // Si on est sur mobile et qu'on n'est pas en mode lecture seule, on affiche un message
-  if (isMobile && !readOnly) {
-    return (
-      <div className="flex items-center justify-center h-screen bg-gray-900 text-white p-4">
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-4">Version mobile limitée</h1>
-          <p>La création de systèmes n'est disponible que sur ordinateur.</p>
-          <p className="mt-2">
-            Vous pouvez cependant visualiser les systèmes existants sur mobile.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   const [playersOnCourt, setPlayersOnCourt] = useState<
     Array<{ id: string; num: number; team: string; x: number; y: number }>
@@ -563,6 +691,154 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
   const [timeline, setTimeline] = useState<LocalAnimationSequence[]>(
     initialData?.timeline || []
   );
+
+  const [currentSequenceIndex, setCurrentSequenceIndex] = useState(0);
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [draggedPlayer, setDraggedPlayer] = useState<any>(null);
+  const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
+  const [isRecording, setIsRecording] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const [audioBlob, setAudioBlob] = useState<Blob | null>(null);
+  const chunksRef = useRef<Blob[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const [courtDimensions, setCourtDimensions] = useState({
+    width: COURT_WIDTH,
+    height: COURT_HEIGHT,
+  });
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [isSelectingShootTarget, setIsSelectingShootTarget] = useState(false);
+  const [selectedPlayerForShoot, setSelectedPlayerForShoot] = useState<
+    string | null
+  >(null);
+  const [showPlayerNumbers, setShowPlayerNumbers] = useState(true);
+  const [canvasScale, setCanvasScale] = useState(1);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [sequenceComment, setSequenceComment] = useState("");
+  const [showSequenceModal, setShowSequenceModal] = useState(false);
+  const [tempPlayerPositions, setTempPlayerPositions] = useState<
+    Array<{ id: string; x: number; y: number }>
+  >([]);
+
+  // États additionnels nécessaires pour le composant
+  const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
+  const courtRef = useRef<HTMLDivElement>(null);
+  const [isPresentationMode, setIsPresentationMode] = useState(false);
+  const [courtSize, setCourtSize] = useState({
+    width: COURT_WIDTH,
+    height: COURT_HEIGHT,
+  });
+  const courtContainerRef = useRef<HTMLDivElement>(null);
+  const [isMounted, setIsMounted] = useState(false);
+  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
+  const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(null);
+  const [currentRecordingIndex, setCurrentRecordingIndex] = useState<number | null>(null);
+  const [shareLink, setShareLink] = useState<string | null>(null);
+  const [initialPlayersPosition, setInitialPlayersPosition] = useState(playersOnCourt);
+  const [initialBallPosition, setInitialBallPosition] = useState(ballPosition);
+  const [initialSetup, setInitialSetup] = useState<{
+    players: typeof playersOnCourt;
+    ball: typeof ballPosition;
+  } | null>(null);
+  const [selectingShoot, setSelectingShoot] = useState(false);
+
+  useEffect(() => {
+    const checkOrientation = () => {
+      setIsLandscape(window.innerWidth > window.innerHeight);
+    };
+
+    checkOrientation();
+    window.addEventListener("resize", checkOrientation);
+
+    return () => {
+      window.removeEventListener("resize", checkOrientation);
+    };
+  }, []);
+
+  // Fonction de calcul de la taille du terrain
+  const updateCourtSize = useCallback(() => {
+    if (courtContainerRef.current) {
+      const containerRect = courtContainerRef.current.getBoundingClientRect();
+      const containerWidth = containerRect.width;
+      const containerHeight = containerRect.height;
+
+      const aspectRatio = COURT_ASPECT_RATIO;
+      let width, height;
+
+      if (containerWidth / containerHeight > aspectRatio) {
+        height = containerHeight;
+        width = height * aspectRatio;
+      } else {
+        width = containerWidth;
+        height = width / aspectRatio;
+      }
+
+      setCourtSize({ width, height });
+    }
+  }, []);
+
+  // Autres useEffect nécessaires
+  useEffect(() => {
+    updateCourtSize();
+    window.addEventListener("resize", updateCourtSize);
+    return () => window.removeEventListener("resize", updateCourtSize);
+  }, [updateCourtSize]);
+
+  useEffect(() => {
+    if (isMounted) {
+      updateCourtSize();
+    }
+  }, [isMounted, updateCourtSize]);
+
+  useEffect(() => {
+    updateCourtSize();
+  }, [isPresentationMode, updateCourtSize]);
+
+  useEffect(() => {
+    if (initialData) {
+      console.log("Données initiales reçues:", initialData);
+      setTimeline(initialData.timeline);
+      setPlayersOnCourt(initialData.playersOnCourt);
+      setBallPosition(initialData.ball || null);
+      setInitialSetup({
+        players: initialData.playersOnCourt,
+        ball: initialData.ball || null,
+      });
+      setArrows([]);
+      setDottedArrows([]);
+      setActionHistory([]);
+    }
+  }, [initialData]);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  // Effet pour gérer l'animation
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+        setArrows((arrows) => arrows.slice(0, -1));
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
+
+  // Callback pour aller à la bibliothèque
+  const goToLibrary = useCallback(() => {
+    window.location.href = "/library";
+  }, []);
+
+  // Retours conditionnels après tous les hooks
+  if (isMobile && !isLandscape) {
+    return <MobileLandscapePrompt />;
+  }
+
+  if (isMobile && !readOnly) {
+    return <MobileCreateSystem subscriptionStatus={subscriptionStatus} user={user} router={router} />;
+  }
 
   const removeSequence = () => {
     if (timeline.length === 0) return;
@@ -604,45 +880,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     }
   };
 
-  const [isPlayingTimeline, setIsPlayingTimeline] = useState(false);
-
-  const courtRef = useRef<HTMLDivElement>(null);
-
-  const [isRecording, setIsRecording] = useState(false);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const chunksRef = useRef<Blob[]>([]);
-
-  const [isPresentationMode, setIsPresentationMode] = useState(false);
-
-  const [courtSize, setCourtSize] = useState({
-    width: COURT_WIDTH,
-    height: COURT_HEIGHT,
-  });
-  const courtContainerRef = useRef<HTMLDivElement>(null);
-
-  const [isMounted, setIsMounted] = useState(false);
-
-  const [isRecordingAudio, setIsRecordingAudio] = useState(false);
-  const [audioRecorder, setAudioRecorder] = useState<MediaRecorder | null>(
-    null
-  );
-  const [currentRecordingIndex, setCurrentRecordingIndex] = useState<
-    number | null
-  >(null);
-
-  const [shareLink, setShareLink] = useState<string | null>(null);
-
-  const [initialPlayersPosition, setInitialPlayersPosition] =
-    useState(playersOnCourt);
-  const [initialBallPosition, setInitialBallPosition] = useState(ballPosition);
-
-  const [initialSetup, setInitialSetup] = useState<{
-    players: typeof playersOnCourt;
-    ball: typeof ballPosition;
-  } | null>(null);
-
-  const [selectingShoot, setSelectingShoot] = useState(false);
-
   const calculateCourtSize = () => {
     const screenWidth = window.innerWidth;
     const screenHeight = window.innerHeight;
@@ -673,70 +910,8 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
       fontSize: baseSize * (isMobile ? 0.04 : 0.03), // Slightly larger font on mobile
     };
   };
-  const updateCourtSize = useCallback(() => {
-    if (courtContainerRef.current) {
-      const containerRect = courtContainerRef.current.getBoundingClientRect();
-      const containerWidth = containerRect.width;
-      const containerHeight = containerRect.height;
-      const aspectRatio = COURT_ASPECT_RATIO;
 
-      let width, height;
-
-      if (isMobile) {
-        // En mode mobile, utilisez toute la largeur disponible
-        width = containerWidth;
-        height = width / aspectRatio;
-
-        // Si la hauteur dépasse la hauteur du conteneur, ajustez en conséquence
-        if (height > containerHeight) {
-          height = containerHeight;
-          width = height * aspectRatio;
-        }
-      } else {
-        // En mode desktop, gardez le comportement actuel
-        if (containerWidth / containerHeight > aspectRatio) {
-          height = containerHeight * 0.95;
-          width = height * aspectRatio;
-        } else {
-          width = containerWidth * 0.95;
-          height = width / aspectRatio;
-        }
-      }
-
-      setCourtSize({ width, height });
-    }
-  }, [isMobile]);
-  useEffect(() => {
-    updateCourtSize();
-    window.addEventListener("resize", updateCourtSize);
-    return () => window.removeEventListener("resize", updateCourtSize);
-  }, [updateCourtSize]);
-
-  useEffect(() => {
-    if (isMounted) {
-      updateCourtSize();
-    }
-  }, [isMounted, updateCourtSize]);
-
-  useEffect(() => {
-    updateCourtSize();
-  }, [isPresentationMode, updateCourtSize]);
-
-  useEffect(() => {
-    if (initialData) {
-      console.log("Données initiales reçues:", initialData);
-      setTimeline(initialData.timeline);
-      setPlayersOnCourt(initialData.playersOnCourt);
-      setBallPosition(initialData.ball || null);
-      setInitialSetup({
-        players: initialData.playersOnCourt,
-        ball: initialData.ball || null,
-      });
-      setArrows([]);
-      setDottedArrows([]);
-      setActionHistory([]);
-    }
-  }, [initialData]);
+  // Fonctions utilitaires
 
   const togglePresentationMode = () => {
     setIsPresentationMode(!isPresentationMode);
@@ -1159,17 +1334,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
     setIsPlayingTimeline(false);
   };
 
-  useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-        setArrows((arrows) => arrows.slice(0, -1));
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isAnimating]);
-
   const startAudioRecording = async (index: number) => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -1291,10 +1455,6 @@ const CreateSystem: React.FC<CreateSystemProps> = ({
         .catch((err) => console.error("Erreur lors de la copie du lien:", err));
     }
   };
-
-  const goToLibrary = useCallback(() => {
-    window.location.href = "/library";
-  }, []);
 
   const MobileSidebar = ({
     isOpen,

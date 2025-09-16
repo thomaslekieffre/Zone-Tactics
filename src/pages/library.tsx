@@ -91,41 +91,66 @@ export default function Library() {
 
   return (
     <div className="min-h-screen bg-gray-900 text-gray-100">
-      <div className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
-        <div className="px-4 py-6 sm:px-0">
-          <div className="flex items-center mb-6">
+      <div className="max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 lg:px-8">
+        <div className="sm:px-0">
+          <div className="flex items-center mb-4 sm:mb-6">
             <button
               onClick={() => router.push("/")}
-              className="mr-4 p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
+              className="mr-3 sm:mr-4 p-2 rounded-full bg-blue-600 text-white hover:bg-blue-700 transition-colors"
             >
               <ArrowLeft size={24} />
             </button>
-            <h1 className="text-3xl font-bold text-gray-100">
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-100">
               Ma Bibliothèque Premium
             </h1>
           </div>
+
+          {/* Bouton pour créer un nouveau système */}
+          <div className="mb-6">
+            <button
+              onClick={() => router.push("/createsystem")}
+              className="w-full sm:w-auto bg-green-600 text-white py-3 px-6 rounded-lg hover:bg-green-700 transition-colors font-medium"
+            >
+              + Créer une nouvelle tactique
+            </button>
+          </div>
+
           {systems.length === 0 ? (
-            <p className="text-xl text-gray-400">Aucun système trouvé.</p>
+            <div className="text-center py-12">
+              <div className="text-gray-400 mb-4">
+                <svg className="mx-auto h-16 w-16 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                </svg>
+              </div>
+              <h3 className="text-lg sm:text-xl font-medium text-gray-300 mb-2">Aucune tactique trouvée</h3>
+              <p className="text-sm sm:text-base text-gray-400 mb-6">Commencez par créer votre première tactique !</p>
+              <button
+                onClick={() => router.push("/createsystem")}
+                className="bg-blue-600 text-white py-2 px-6 rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Créer ma première tactique
+              </button>
+            </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {systems.map((system) => (
                 <div
                   key={system.id}
-                  className="bg-gray-800 overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-shadow"
+                  className="bg-gray-800 overflow-hidden shadow-lg rounded-lg hover:shadow-xl transition-all hover:scale-105"
                 >
-                  <div className="px-4 py-5 sm:p-6">
-                    <h3 className="text-lg font-semibold text-gray-100 mb-2">
+                  <div className="p-4 sm:p-6">
+                    <h3 className="text-base sm:text-lg font-semibold text-gray-100 mb-2 line-clamp-2">
                       {system.name}
                     </h3>
-                    <p className="text-sm text-gray-400 mb-4">
-                      Créé le {new Date(system.createdAt).toLocaleDateString()}
+                    <p className="text-xs sm:text-sm text-gray-400 mb-4">
+                      Créé le {new Date(system.createdAt).toLocaleDateString("fr-FR")}
                     </p>
                     <button
                       onClick={() => viewSystem(system.id)}
-                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="w-full inline-flex items-center justify-center px-4 py-2 text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors"
                     >
-                      <Eye size={18} className="mr-2" />
-                      Voir le système
+                      <Eye size={16} className="mr-2" />
+                      Voir la tactique
                     </button>
                   </div>
                 </div>
