@@ -158,14 +158,14 @@ export function LandingDemo() {
           />
         )}
 
-        {/* Badge "DÉMO LIVE" */}
-        <div className="absolute top-3 left-3 z-10 flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold shadow-lg">
+        {/* Badge "DÉMO LIVE" — masqué mobile : trop chargé sur petit écran */}
+        <div className="absolute top-3 left-3 z-10 hidden md:flex items-center gap-1.5 rounded-full bg-primary text-primary-foreground px-3 py-1 text-xs font-semibold shadow-lg">
           <span className="size-2 rounded-full bg-white animate-pulse" />
           DÉMO LIVE
         </div>
 
         {/* Légende équipes */}
-        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 rounded-lg bg-background/95 px-3 py-2 text-xs shadow-lg border">
+        <div className="absolute top-3 right-3 z-10 hidden md:flex flex-col gap-1 rounded-lg bg-background/95 px-3 py-2 text-xs shadow-lg border">
           <div className="flex items-center gap-2">
             <span className="size-3 rounded-full bg-blue-600" />
             <span className="font-medium">Attaquants</span>
@@ -178,7 +178,7 @@ export function LandingDemo() {
 
         {/* Caption de la séquence en cours */}
         {currentSeq?.comment && (
-          <div className="absolute left-1/2 -translate-x-1/2 bottom-16 z-10 max-w-[80%] rounded-full bg-foreground/95 text-background px-4 py-2 text-sm font-medium shadow-xl text-center">
+          <div className="absolute left-1/2 -translate-x-1/2 bottom-16 z-10 hidden md:block max-w-[80%] rounded-full bg-foreground/95 text-background px-4 py-2 text-sm font-medium shadow-xl text-center">
             {currentSeq.comment}
           </div>
         )}
@@ -190,26 +190,30 @@ export function LandingDemo() {
           <button
             type="button"
             onClick={togglePause}
-            className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            aria-label={paused ? "Reprendre la démo" : "Mettre la démo en pause"}
+            className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 sm:px-4 text-sm font-medium hover:bg-muted transition-colors"
           >
-            {paused ? <Play className="size-4" /> : <Pause className="size-4" />}
-            {paused ? "Reprendre" : "Pause"}
+            {paused ? <Play className="size-4 shrink-0" /> : <Pause className="size-4 shrink-0" />}
+            <span className="hidden sm:inline">{paused ? "Reprendre" : "Pause"}</span>
           </button>
           <button
             type="button"
             onClick={restart}
-            className="inline-flex items-center gap-2 rounded-full border bg-background px-4 py-2 text-sm font-medium hover:bg-muted transition-colors"
+            aria-label="Recommencer la démo"
+            className="inline-flex items-center gap-2 rounded-full border bg-background px-3 py-2 sm:px-4 text-sm font-medium hover:bg-muted transition-colors"
           >
-            <RotateCcw className="size-4" />
-            Recommencer
+            <RotateCcw className="size-4 shrink-0" />
+            <span className="hidden sm:inline">Recommencer</span>
           </button>
         </div>
 
         <Link
           href="/signup"
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline max-sm:text-xs max-sm:max-w-[42vw] max-sm:truncate"
         >
-          Créer ma propre tactique →
+          <span className="hidden sm:inline">Créer ma propre tactique</span>
+          <span className="sm:hidden">Créer une tactique</span>
+          →
         </Link>
       </div>
     </div>

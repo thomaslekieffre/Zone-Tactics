@@ -14,6 +14,14 @@ import {
   StaggerItem,
   HeroBackground,
 } from "@/app/(marketing)/_components/MarketingMotion";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Tarifs — Coach Pro 10 € / an",
+  description:
+    "Tactiques illimitées, audio, partage par lien, export vidéo pour réseaux sociaux. Un seul plan simple pour coachs et créateurs de contenu basket.",
+  alternates: { canonical: "/pricing" },
+};
 
 export default function PricingPage() {
   return (

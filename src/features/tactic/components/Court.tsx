@@ -16,6 +16,7 @@ type Frame = { players: PlayerPlacement[]; ball?: NormPoint };
 
 export type CourtHandle = {
   setPlaybackFrame: (frame: Frame | null) => void;
+  getStage: () => Konva.Stage | null;
 };
 
 type Props = {
@@ -126,7 +127,10 @@ export function Court({ readOnly = false, onReady }: Props) {
   }, [data]);
 
   useEffect(() => {
-    onReady?.({ setPlaybackFrame: applyPlaybackFrame });
+    onReady?.({
+      setPlaybackFrame: applyPlaybackFrame,
+      getStage: () => stageRef.current,
+    });
   }, [onReady, applyPlaybackFrame]);
 
   // Cache la layer du terrain (statique) en bitmap : aucune

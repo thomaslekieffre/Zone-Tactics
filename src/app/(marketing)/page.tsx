@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, PlayCircle } from "lucide-react";
 import { BasketballIcon } from "@/components/BasketballIcon";
@@ -8,6 +9,21 @@ import {
 } from "./_components/MarketingMotion";
 import { FeatureBento } from "./_components/FeatureBento";
 import { LandingDemo } from "./_components/LandingDemo";
+
+export const metadata: Metadata = {
+  title: "Tactiques basketball animées — tableau noir coach mobile",
+  description:
+    "Zone Tactics : dessine ton playbook sur téléphone ou tablette, anime tes systèmes (course, passe, tir), exporte en vidéo verticale pour Reels / TikTok, partage un lien à ton équipe. Bleu = attaquants, rouge = défenseurs.",
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "Zone Tactics — Dessine et anime tes tactiques de basket",
+    description:
+      "Export vidéo WebM Reels & YouTube, coaching vocal, partage sans compte.",
+    url: "/",
+  },
+};
 
 export default function HomePage() {
   return (

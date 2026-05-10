@@ -26,6 +26,8 @@ import { Toolbar } from "./Toolbar";
 import { PlayerPalette } from "./PlayerPalette";
 import { Timeline } from "./Timeline";
 import { ShareDialog } from "./ShareDialog";
+import { ExportVideoButton } from "./ExportVideoButton";
+import type { CourtHandle } from "./Court";
 import { playTactic, type PlaybackFrame } from "../lib/playback";
 
 const Court = dynamic(() => import("./Court").then((m) => m.Court), {
@@ -69,9 +71,7 @@ export function TacticEditor({
   const dirty = useTacticStore((s) => s.dirty);
 
   const [hydrated, setHydrated] = useState(false);
-  const courtHandleRef = useRef<{
-    setPlaybackFrame: (f: PlaybackFrame | null) => void;
-  } | null>(null);
+  const courtHandleRef = useRef<CourtHandle | null>(null);
   const playbackAbortRef = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -154,6 +154,7 @@ export function TacticEditor({
             <SaveIndicator status={saveStatus} dirty={dirty} />
           )}
           <div className="ml-auto flex items-center gap-2">
+            {!readOnly && <ExportVideoButton courtRef={courtHandleRef} />}
             {!readOnly && tacticId && <ShareDialog tacticId={tacticId} />}
           </div>
         </div>
