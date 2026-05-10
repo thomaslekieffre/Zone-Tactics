@@ -4,11 +4,9 @@ import { ArrowRight, PlayCircle } from "lucide-react";
 import { BasketballIcon } from "@/components/BasketballIcon";
 import {
   FadeUp,
-  StaggerChildren,
-  StaggerItem,
   HeroBackground,
-  FeatureCard,
 } from "./_components/MarketingMotion";
+import { FeatureBento } from "./_components/FeatureBento";
 import { LandingDemo } from "./_components/LandingDemo";
 
 export default function HomePage() {
@@ -22,18 +20,36 @@ export default function HomePage() {
 
         <div className="container px-4 md:px-6 text-center relative z-10">
           <FadeUp delay={0.1}>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight text-foreground max-w-4xl mx-auto mb-8 leading-tight">
-              Dessinez vos systèmes. <br className="hidden sm:block" />
-              <span className="text-primary inline-flex items-center gap-3">
-                Gagnez vos matchs.
-                <BasketballIcon className="size-12 md:size-16 inline-block animate-bounce-soft" />
+            <h1 className="text-balance text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight max-w-4xl mx-auto mb-6 leading-[1.05]">
+              <span className="text-foreground/90">Dessinez vos </span>
+              <span className="relative inline-block text-foreground">
+                systèmes.
+                <svg
+                  aria-hidden
+                  viewBox="0 0 220 14"
+                  className="absolute left-0 -bottom-1 sm:-bottom-2 w-full h-2 sm:h-3 text-primary"
+                  preserveAspectRatio="none"
+                >
+                  <path
+                    d="M2 9 Q 55 1 110 7 T 218 5"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="3.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
               </span>
+              <br />
+              <span className="inline-flex items-center gap-2 sm:gap-3 italic bg-gradient-to-r from-primary via-orange-500 to-amber-500 bg-clip-text text-transparent">
+                Gagnez vos matchs.
+              </span>
+              <BasketballIcon className="ml-2 size-9 sm:size-12 md:size-16 inline-block align-middle animate-bounce-soft" />
             </h1>
           </FadeUp>
 
           <FadeUp delay={0.2}>
-            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Zone Tactics est le tableau noir numérique nouvelle génération. Créez des animations fluides, ajoutez votre voix, et partagez vos tactiques instantanément avec vos joueurs.
+            <p className="text-balance text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
+              Le tableau noir numérique des coachs modernes. Animations fluides, commentaires audio, partage instantané.
             </p>
           </FadeUp>
 
@@ -68,57 +84,23 @@ export default function HomePage() {
         <div className="container px-4 md:px-6">
           <FadeUp>
             <div className="text-center max-w-2xl mx-auto mb-16">
-              <h2 className="text-3xl md:text-4xl font-bold mb-4">Pensé pour le terrain</h2>
-              <p className="text-muted-foreground text-lg">
-                Une interface épurée qui va à l'essentiel, pour que vous passiez moins de temps sur l'écran et plus de temps à coacher.
+              <h2 className="text-balance text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-4 leading-[1.1]">
+                Pensé pour{" "}
+                <span className="relative inline-block">
+                  <span className="relative z-10">le terrain</span>
+                  <span
+                    aria-hidden
+                    className="absolute inset-x-0 bottom-1 h-3 sm:h-4 bg-primary/30 -rotate-1 -z-0 rounded"
+                  />
+                </span>
+              </h2>
+              <p className="text-balance text-muted-foreground text-base sm:text-lg">
+                Une interface épurée qui va à l&apos;essentiel. Moins de temps sur l&apos;écran, plus de temps à coacher.
               </p>
             </div>
           </FadeUp>
 
-          <StaggerChildren className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <StaggerItem>
-              <FeatureCard
-                icon="smartphone"
-                title="100% Mobile & Tactile"
-                description="Utilisez-le sur le banc avec votre tablette ou smartphone. Le drag & drop est natif et ultra-réactif."
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <FeatureCard
-                icon="mic"
-                title="Coaching Vocal"
-                description="Enregistrez vos consignes audio séquence par séquence. Vos joueurs entendent votre voix en regardant l'animation."
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <FeatureCard
-                icon="share"
-                title="Partage Instantané"
-                description="Envoyez un simple lien dans le groupe WhatsApp de l'équipe. Pas besoin de compte pour lire une tactique."
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <FeatureCard
-                icon="users"
-                title="Attaque vs Défense"
-                description="Placez vos attaquants (bleu) et vos défenseurs (rouge). Le ballon s'attache intelligemment."
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <FeatureCard
-                icon="play"
-                title="Animations Fluides"
-                description="Fini les flèches statiques incompréhensibles. Appuyez sur Play et regardez le système prendre vie."
-              />
-            </StaggerItem>
-            <StaggerItem>
-              <FeatureCard
-                icon="sparkles"
-                title="Zéro Prise de Tête"
-                description="Pas de menus complexes. Une barre d'outils simple : Course, Passe, Tir. C'est tout."
-              />
-            </StaggerItem>
-          </StaggerChildren>
+          <FeatureBento />
         </div>
       </section>
 
@@ -127,12 +109,21 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-primary/5" />
         <div className="container px-4 md:px-6 text-center relative z-10">
           <FadeUp>
-            <h2 className="text-3xl md:text-4xl font-bold mb-6">Prêt à révolutionner vos entraînements ?</h2>
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              Rejoignez les coachs qui utilisent déjà Zone Tactics pour faire progresser leur équipe.
+            <h2 className="text-balance text-3xl sm:text-4xl md:text-5xl font-extrabold tracking-tight mb-6 leading-[1.1]">
+              Prêt à{" "}
+              <span className="italic bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
+                tout changer
+              </span>{" "}
+              cette saison&nbsp;?
+            </h2>
+            <p className="text-balance text-base sm:text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
+              Rejoignez les coachs qui utilisent Zone Tactics pour faire progresser leur équipe, match après match.
             </p>
-            <Button asChild size="lg" className="h-12 px-8 rounded-full">
-              <Link href="/signup">Créer mon compte gratuit</Link>
+            <Button asChild size="lg" className="h-12 px-8 rounded-full shadow-lg shadow-primary/20">
+              <Link href="/signup">
+                Créer mon compte gratuit
+                <ArrowRight className="ml-2 size-4" />
+              </Link>
             </Button>
           </FadeUp>
         </div>

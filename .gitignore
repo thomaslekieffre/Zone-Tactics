@@ -38,6 +38,8 @@ yarn-error.log*
 
 # typescript
 *.tsbuildinfo
+# Auto-genere par Next a chaque dev/build, contenu volatile
+next-env.d.ts
 
 # IDE / OS / agents
 .cursor/

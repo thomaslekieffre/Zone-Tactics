@@ -22,10 +22,13 @@ export default function PricingPage() {
       
       <div className="container max-w-xl relative z-10">
         <FadeUp>
-          <h1 className="text-4xl sm:text-5xl font-extrabold text-center mb-4 tracking-tight">
-            Passez au niveau <span className="text-primary">supérieur</span>
+          <h1 className="text-balance text-3xl sm:text-4xl md:text-5xl font-extrabold text-center mb-4 tracking-tight leading-[1.1]">
+            Passez au niveau{" "}
+            <span className="relative inline-block italic bg-gradient-to-r from-primary to-amber-500 bg-clip-text text-transparent">
+              supérieur
+            </span>
           </h1>
-          <p className="text-center text-lg text-muted-foreground mb-12 max-w-md mx-auto">
+          <p className="text-balance text-center text-base sm:text-lg text-muted-foreground mb-12 max-w-md mx-auto">
             Toutes les fonctionnalités débloquées. Un seul prix simple et transparent.
           </p>
         </FadeUp>
