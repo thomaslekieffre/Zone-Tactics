@@ -9,18 +9,20 @@ import {
 } from "./_components/MarketingMotion";
 import { FeatureBento } from "./_components/FeatureBento";
 import { LandingDemo } from "./_components/LandingDemo";
+import { LandingFeatureHighlights } from "./_components/LandingFeatureHighlights";
+import { LandingTemplates } from "./_components/LandingTemplates";
 
 export const metadata: Metadata = {
   title: "Tactiques basketball animées — tableau noir coach mobile",
   description:
-    "Zone Tactics : dessine ton playbook sur téléphone ou tablette, anime tes systèmes (course, passe, tir), exporte en vidéo verticale pour Reels / TikTok, partage un lien à ton équipe. Bleu = attaquants, rouge = défenseurs.",
+    "Zone Tactics : playbook animé sur mobile, templates Horns / Spain / zone, GIF & vidéo WebM, partage à PIN, annotations parquet. Bleu = attaquants, rouge = défenseurs.",
   alternates: {
     canonical: "/",
   },
-  openGraph: {
+    openGraph: {
     title: "Zone Tactics — Dessine et anime tes tactiques de basket",
     description:
-      "Export vidéo WebM Reels & YouTube, coaching vocal, partage sans compte.",
+      "Templates prêts, export GIF & WebM Reels, partage avec PIN, coaching vocal.",
     url: "/",
   },
 };
@@ -65,7 +67,7 @@ export default function HomePage() {
 
           <FadeUp delay={0.2}>
             <p className="text-balance text-base sm:text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto mb-10 leading-relaxed">
-              Le tableau noir numérique des coachs modernes. Animations fluides, commentaires audio, partage instantané.
+              Tableau noir animé : templates Horns, Spain, zone… export GIF ou WebM pour les réseaux, lien partagé avec PIN optionnel.
             </p>
           </FadeUp>
 
@@ -81,6 +83,11 @@ export default function HomePage() {
                 <Link href="/demo">
                   Voir la démo en live
                   <PlayCircle className="ml-2 size-4 transition-transform group-hover:scale-110" />
+                </Link>
+              </Button>
+              <Button asChild size="lg" variant="ghost" className="h-12 px-6 text-base w-full sm:w-auto rounded-full">
+                <Link href="#templates">
+                  Voir les modèles
                 </Link>
               </Button>
             </div>
@@ -119,6 +126,10 @@ export default function HomePage() {
           <FeatureBento />
         </div>
       </section>
+
+      <LandingFeatureHighlights />
+
+      <LandingTemplates />
 
       {/* CTA */}
       <section className="py-24 relative overflow-hidden">

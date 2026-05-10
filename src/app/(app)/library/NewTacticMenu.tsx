@@ -1,7 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Plus, ChevronDown, FileText, Layers, Square } from "lucide-react";
+import {
+  ArrowLeftRight,
+  ChevronDown,
+  GitBranch,
+  LayoutGrid,
+  Layers,
+  Plus,
+  Repeat,
+  Shuffle,
+  Square,
+  Target,
+  Zap,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -11,34 +23,23 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { getTemplateCatalogEntries } from "@/features/tactic/lib/templates";
 
-const TEMPLATES: {
-  key: string;
-  label: string;
-  desc: string;
-  icon: React.ReactNode;
-}[] = [
-  {
-    key: "vide",
-    label: "Terrain vide",
-    desc: "Place tes joueurs from scratch",
-    icon: <Square className="size-4 text-primary" />,
-  },
-  {
-    key: "pick-roll",
-    label: "Pick & roll",
-    desc: "Démo prête à modifier (4 séquences)",
-    icon: <Layers className="size-4 text-primary" />,
-  },
-  {
-    key: "zone-23",
-    label: "Zone 2-3",
-    desc: "Squelette défensif, 0 séquence",
-    icon: <FileText className="size-4 text-primary" />,
-  },
-];
+const ICONS: Record<string, React.ReactNode> = {
+  vide: <Square className="size-4 text-primary shrink-0" />,
+  "pick-roll": <Layers className="size-4 text-primary shrink-0" />,
+  "zone-23": <LayoutGrid className="size-4 text-primary shrink-0" />,
+  horns: <GitBranch className="size-4 text-primary shrink-0" />,
+  "iso-wing": <Target className="size-4 text-primary shrink-0" />,
+  "spain-pnr": <Repeat className="size-4 text-primary shrink-0" />,
+  transition: <Zap className="size-4 text-primary shrink-0" />,
+  handoff: <ArrowLeftRight className="size-4 text-primary shrink-0" />,
+  "motion-weak": <Shuffle className="size-4 text-primary shrink-0" />,
+};
 
 export function NewTacticMenu() {
+  const rows = getTemplateCatalogEntries();
+
   return (
     <div className="flex">
       <Button asChild className="rounded-r-none">
@@ -56,18 +57,21 @@ export function NewTacticMenu() {
             <ChevronDown className="size-4" />
           </Button>
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-64">
+        <DropdownMenuContent
+          align="end"
+          className="w-72 max-h-[min(70vh,520px)] overflow-y-auto"
+        >
           <DropdownMenuLabel className="text-xs font-normal text-muted-foreground">
             Partir d&apos;un template
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          {TEMPLATES.map((t) => (
+          {rows.map((t) => (
             <DropdownMenuItem key={t.key} asChild className="gap-2 cursor-pointer">
               <Link href={`/tactic/new?template=${t.key}`}>
-                {t.icon}
+                {ICONS[t.key] ?? <Layers className="size-4 text-primary shrink-0" />}
                 <div>
                   <div className="font-medium">{t.label}</div>
-                  <div className="text-xs text-muted-foreground">{t.desc}</div>
+                  <div className="text-xs text-muted-foreground">{t.blurb}</div>
                 </div>
               </Link>
             </DropdownMenuItem>
