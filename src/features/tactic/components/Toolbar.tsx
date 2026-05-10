@@ -10,6 +10,8 @@ import {
   Target,
   Undo2,
   X,
+  Pencil,
+  Type,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,6 +30,7 @@ type Props = {
 
 export function Toolbar({ onPlay, onStop, className }: Props) {
   const tool = useTacticStore((s) => s.tool);
+  const annotateMode = useTacticStore((s) => s.annotateMode);
   const data = useTacticStore((s) => s.data);
   const isPlaying = useTacticStore((s) => s.isPlaying);
   const draftMovementsCount = useTacticStore(
@@ -42,6 +45,7 @@ export function Toolbar({ onPlay, onStop, className }: Props) {
   const removeLastSequence = useTacticStore((s) => s.removeLastSequence);
   const pickPassFrom = useTacticStore((s) => s.pickPassFrom);
   const pickShootPlayer = useTacticStore((s) => s.pickShootPlayer);
+  const setAnnotateMode = useTacticStore((s) => s.setAnnotateMode);
 
   const empty = courtIsEmpty(data);
 
@@ -118,6 +122,14 @@ export function Toolbar({ onPlay, onStop, className }: Props) {
       onClick: onPickShoot,
     },
     {
+      id: "annotate",
+      label: "Annotations",
+      icon: <Pencil className="size-5" />,
+      active: tool === "annotate",
+      disabled: isPlaying,
+      onClick: () => setTool(tool === "annotate" ? "idle" : "annotate"),
+    },
+    {
       id: "undo",
       label: "Annuler dernière",
       icon: <Undo2 className="size-5" />,
@@ -131,6 +143,26 @@ export function Toolbar({ onPlay, onStop, className }: Props) {
       {items.map((it) => (
         <ToolButton key={it.id} {...it} />
       ))}
+      {tool === "annotate" && (
+        <>
+          <ToolButton
+            id="ann-pen"
+            label="Craie"
+            icon={<Pencil className="size-4" />}
+            active={annotateMode === "pen"}
+            disabled={isPlaying}
+            onClick={() => setAnnotateMode("pen")}
+          />
+          <ToolButton
+            id="ann-label"
+            label="Texte"
+            icon={<Type className="size-4" />}
+            active={annotateMode === "label"}
+            disabled={isPlaying}
+            onClick={() => setAnnotateMode("label")}
+          />
+        </>
+      )}
       <div className="hidden sm:block w-px self-stretch bg-border mx-1" />
       <ToolButton
         id="cancel"

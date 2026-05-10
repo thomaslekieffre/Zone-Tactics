@@ -1,16 +1,20 @@
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { TacticEditor } from "@/features/tactic/components/TacticEditor";
-import { EMPTY_TACTIC } from "@/features/tactic/lib/types";
+import { getTemplateData } from "@/features/tactic/lib/templates";
 import { saveTactic } from "../[id]/actions";
 import { getSubscriptionStatus } from "@/lib/subscription";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
-export default async function NewTacticPage() {
+export default async function NewTacticPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ template?: string }>;
+}) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -38,11 +42,14 @@ export default async function NewTacticPage() {
     );
   }
 
+  const { template } = await searchParams;
+  const initialData = getTemplateData(template);
+
   return (
     <TacticEditor
       initialId={null}
       initialName=""
-      initialData={EMPTY_TACTIC}
+      initialData={initialData}
       saveAction={saveTactic}
     />
   );

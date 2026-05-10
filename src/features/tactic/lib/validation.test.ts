@@ -58,6 +58,17 @@ describe("tacticDataSchema", () => {
     expect(r.success).toBe(true);
   });
 
+  it("accepts annotations optionnelles", () => {
+    const r = tacticDataSchema.safeParse({
+      ...EMPTY_TACTIC,
+      annotations: {
+        strokes: [{ id: "s1", points: [0.1, 0.2, 0.3, 0.4] }],
+        labels: [{ id: "l1", x: 0.5, y: 0.5, text: "ATO" }],
+      },
+    });
+    expect(r.success).toBe(true);
+  });
+
   it("rejects max 10 players", () => {
     const players = Array.from({ length: 11 }, (_, i) => ({
       id: `p${i}`,

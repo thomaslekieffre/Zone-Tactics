@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { requireActiveSubscription } from "@/lib/subscription";
 
 export type TacticListItem = {
   id: string;
@@ -36,6 +37,42 @@ export async function listTactics(): Promise<TacticListItem[]> {
       ? row.data.sequences.length
       : 0,
   }));
+}
+
+export async function duplicateTactic(id: string): Promise<{ id: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/login");
+
+  const isActive = await requireActiveSubscription();
+  if (!isActive) throw new Error("Abonnement requis");
+
+  const { data: row, error: loadErr } = await supabase
+    .from("tactics")
+    .select("name, data")
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (loadErr || !row) throw new Error("Tactique introuvable");
+
+  const copyLabel = `${row.name} (copie)`.slice(0, 80);
+  const { data: inserted, error } = await supabase
+    .from("tactics")
+    .insert({
+      user_id: user.id,
+      name: copyLabel,
+      data: row.data,
+    })
+    .select("id")
+    .single();
+
+  if (error || !inserted) throw new Error(error?.message ?? "Duplication impossible");
+
+  revalidatePath("/library");
+  return { id: inserted.id };
 }
 
 export async function deleteTactic(id: string) {

@@ -1,10 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Stage, Layer, Image as KImage, Rect, Group } from "react-konva";
+import { Stage, Layer, Image as KImage, Rect, Group, Line, Text } from "react-konva";
 import type Konva from "konva";
 import type { KonvaEventObject } from "konva/lib/Node";
-import { useTacticStore, currentPositions } from "../hooks/useTacticStore";
+import { useTacticStore, currentPositions, type Tool, type AnnotateMode } from "../hooks/useTacticStore";
 import type { NormPoint, PlayerPlacement } from "../lib/types";
 import { COURT_ASPECT_RATIO, BASKET_NORM } from "../lib/types";
 import { useCourtImage } from "./useCourtImage";
@@ -43,6 +43,14 @@ export function Court({ readOnly = false, onReady }: Props) {
   const draftPass = useTacticStore((s) => s.draftPass);
   const shootPlayerId = useTacticStore((s) => s.shootPlayerId);
   const isPlaying = useTacticStore((s) => s.isPlaying);
+  const annotateMode = useTacticStore((s) => s.annotateMode);
+  const addAnnotationStroke = useTacticStore((s) => s.addAnnotationStroke);
+  const addAnnotationLabel = useTacticStore((s) => s.addAnnotationLabel);
+
+  const skipStageClickRef = useRef(false);
+  const drawingStrokeRef = useRef(false);
+  const strokePointsRef = useRef<number[] | null>(null);
+  const [previewStroke, setPreviewStroke] = useState<number[] | null>(null);
 
   const movePlayerInitial = useTacticStore((s) => s.movePlayerInitial);
   const setMovementTarget = useTacticStore((s) => s.setMovementTarget);
@@ -154,6 +162,7 @@ export function Court({ readOnly = false, onReady }: Props) {
 
   const handlePlayerTap = (player: PlayerPlacement) => {
     if (readOnly || isPlaying) return;
+    if (tool === "annotate") return;
 
     if (tool === "arrow") {
       if (!arrowFromPlayerId) {
@@ -195,6 +204,7 @@ export function Court({ readOnly = false, onReady }: Props) {
 
   const handlePlayerMove = (player: PlayerPlacement, point: NormPoint) => {
     if (readOnly || isPlaying) return;
+    if (tool === "annotate") return;
     // En mode "Course" : drag = trace une course, le joueur reste à sa place.
     // Sinon, si setup pas encore verrouillé : drag = repositionne le joueur initial.
     // Sinon (séquence(s) existent) : drag = course pour la prochaine séquence.
@@ -209,6 +219,19 @@ export function Court({ readOnly = false, onReady }: Props) {
 
   const handleStageActivate = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
     if (readOnly || isPlaying) return;
+    if (skipStageClickRef.current) return;
+    if (tool === "annotate" && annotateMode === "label") {
+      if (e.target !== e.target.getStage()) return;
+      const stage = e.target.getStage();
+      if (!stage || size.w === 0) return;
+      const pointer = stage.getPointerPosition();
+      if (!pointer) return;
+      const raw = window.prompt("Texte sur le terrain");
+      if (raw?.trim()) {
+        addAnnotationLabel(pointer.x / size.w, pointer.y / size.h, raw);
+      }
+      return;
+    }
     if (e.target !== e.target.getStage()) return;
     if (tool === "arrow" && arrowFromPlayerId) {
       const stage = e.target.getStage();
@@ -219,6 +242,52 @@ export function Court({ readOnly = false, onReady }: Props) {
         x: pointer.x / size.w,
         y: pointer.y / size.h,
       });
+    }
+  };
+
+  const appendStrokeNormPair = (): [number, number] | null => {
+    const stage = stageRef.current;
+    if (!stage || size.w === 0) return null;
+    const pointer = stage.getPointerPosition();
+    if (!pointer) return null;
+    return [pointer.x / size.w, pointer.y / size.h];
+  };
+
+  const handleStrokeStart = (e: KonvaEventObject<MouseEvent | TouchEvent>) => {
+    if (readOnly || isPlaying || tool !== "annotate" || annotateMode !== "pen")
+      return;
+    if (e.target !== e.target.getStage()) return;
+    const pair = appendStrokeNormPair();
+    if (!pair) return;
+    drawingStrokeRef.current = true;
+    const initial = [pair[0], pair[1]];
+    strokePointsRef.current = initial;
+    setPreviewStroke(initial);
+  };
+
+  const handleStrokeMove = () => {
+    if (!drawingStrokeRef.current) return;
+    const pair = appendStrokeNormPair();
+    if (!pair) return;
+    const cur = strokePointsRef.current;
+    if (!cur) return;
+    const next = [...cur, pair[0], pair[1]];
+    strokePointsRef.current = next;
+    setPreviewStroke(next);
+  };
+
+  const handleStrokeEnd = () => {
+    if (!drawingStrokeRef.current) return;
+    drawingStrokeRef.current = false;
+    const pts = strokePointsRef.current;
+    strokePointsRef.current = null;
+    setPreviewStroke(null);
+    if (pts && pts.length >= 4) {
+      skipStageClickRef.current = true;
+      queueMicrotask(() => {
+        skipStageClickRef.current = false;
+      });
+      addAnnotationStroke(pts);
     }
   };
 
@@ -298,6 +367,7 @@ export function Court({ readOnly = false, onReady }: Props) {
       {!readOnly && (
         <CourtHint
           tool={tool}
+          annotateMode={annotateMode}
           arrowFromPlayerId={arrowFromPlayerId}
           draftPass={draftPass}
           setupLocked={setupLocked}
@@ -308,6 +378,10 @@ export function Court({ readOnly = false, onReady }: Props) {
           ref={stageRef}
           width={size.w}
           height={size.h}
+          onMouseDown={handleStrokeStart}
+          onMouseMove={handleStrokeMove}
+          onMouseUp={handleStrokeEnd}
+          onMouseLeave={handleStrokeEnd}
           onClick={handleStageActivate}
           onTap={handleStageActivate}
         >
@@ -378,7 +452,11 @@ export function Court({ readOnly = false, onReady }: Props) {
                     else playerNodesRef.current.delete(p.id);
                   }}
                   draggable={
-                    !readOnly && !isPlaying && tool !== "pass" && tool !== "shoot"
+                    !readOnly &&
+                    !isPlaying &&
+                    tool !== "pass" &&
+                    tool !== "shoot" &&
+                    tool !== "annotate"
                   }
                   onTap={() => handlePlayerTap(p)}
                   onDragEnd={(pt) => handlePlayerMove(p, pt)}
@@ -390,6 +468,7 @@ export function Court({ readOnly = false, onReady }: Props) {
                   }
                   dim={
                     tool !== "idle" &&
+                    tool !== "annotate" &&
                     !isSelectableForArrow(p) &&
                     !isSelectableForPass(p) &&
                     !isSelectableForShoot(p) &&
@@ -411,6 +490,66 @@ export function Court({ readOnly = false, onReady }: Props) {
               />
             )}
           </Layer>
+
+          <Layer listening={false}>
+            {data.annotations?.strokes.map((st) => {
+              const pts: number[] = [];
+              for (let i = 0; i < st.points.length; i += 2) {
+                pts.push(
+                  st.points[i] * size.w,
+                  st.points[i + 1] * size.h,
+                );
+              }
+              return (
+                <Line
+                  key={st.id}
+                  points={pts}
+                  stroke="#f8fafc"
+                  strokeWidth={3}
+                  lineCap="round"
+                  lineJoin="round"
+                  opacity={0.95}
+                  shadowColor="black"
+                  shadowBlur={3}
+                  tension={0.35}
+                />
+              );
+            })}
+            {previewStroke && previewStroke.length >= 2 &&
+              (() => {
+                const pts: number[] = [];
+                for (let i = 0; i < previewStroke.length; i += 2) {
+                  pts.push(
+                    previewStroke[i] * size.w,
+                    previewStroke[i + 1] * size.h,
+                  );
+                }
+                return (
+                  <Line
+                    points={pts}
+                    stroke="#fde047"
+                    strokeWidth={3}
+                    lineCap="round"
+                    lineJoin="round"
+                    dash={[6, 6]}
+                  />
+                );
+              })()}
+            {data.annotations?.labels.map((lb) => (
+              <Text
+                key={lb.id}
+                x={lb.x * size.w}
+                y={lb.y * size.h}
+                text={lb.text}
+                fontSize={14}
+                fontStyle="bold"
+                fill="#f8fafc"
+                shadowColor="black"
+                shadowBlur={4}
+                shadowOffset={{ x: 0, y: 1 }}
+              />
+            ))}
+          </Layer>
         </Stage>
       )}
     </div>
@@ -419,16 +558,23 @@ export function Court({ readOnly = false, onReady }: Props) {
 
 function CourtHint({
   tool,
+  annotateMode,
   arrowFromPlayerId,
   draftPass,
   setupLocked,
 }: {
-  tool: "idle" | "arrow" | "pass" | "shoot";
+  tool: Tool;
+  annotateMode: AnnotateMode;
   arrowFromPlayerId: string | null;
   draftPass: { fromPlayerId: string; toPlayerId: string | null } | null;
   setupLocked: boolean;
 }) {
   const text = (() => {
+    if (tool === "annotate") {
+      return annotateMode === "pen"
+        ? "Trace sur le parquet (craie)."
+        : "Clique sur le terrain vide pour ajouter un libellé.";
+    }
     if (tool === "idle") {
       if (setupLocked) {
         return "Déplacez un joueur pour tracer une course, ou utilisez les outils en bas.";

@@ -11,7 +11,7 @@ const DIMENSIONS: Record<ExportFormat, { w: number; h: number }> = {
 };
 
 /** Fusionne les canvas des layers Konva (ordre z-index = ordre des enfants). */
-function compositeStage(stage: Stage): HTMLCanvasElement {
+export function compositeStage(stage: Stage): HTMLCanvasElement {
   const w = stage.width();
   const h = stage.height();
   const c = document.createElement("canvas");
@@ -32,7 +32,7 @@ function compositeStage(stage: Stage): HTMLCanvasElement {
   return c;
 }
 
-function letterbox(
+export function letterbox(
   src: HTMLCanvasElement,
   out: HTMLCanvasElement,
   format: ExportFormat,

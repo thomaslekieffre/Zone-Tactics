@@ -25,6 +25,7 @@
     "@supabase/supabase-js": "^2.105.4",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "gifenc": "^1.0.3",
     "konva": "^10.3.0",
     "lucide-react": "^0.547.0",
     "motion": "^12.38.0",

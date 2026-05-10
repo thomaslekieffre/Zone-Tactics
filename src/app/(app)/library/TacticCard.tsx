@@ -1,9 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
-import { Trash2, Pencil } from "lucide-react";
+import { Trash2, Pencil, Copy } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,10 +25,24 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deleteTactic, type TacticListItem } from "./actions";
+import { deleteTactic, duplicateTactic, type TacticListItem } from "./actions";
 
 export function TacticCard({ tactic }: { tactic: TacticListItem }) {
+  const router = useRouter();
   const [pending, startTransition] = useTransition();
+
+  const onDuplicate = () => {
+    startTransition(async () => {
+      try {
+        const { id } = await duplicateTactic(tactic.id);
+        toast.success("Copie créée");
+        router.push(`/tactic/${id}`);
+      } catch (e) {
+        toast.error("Duplication impossible");
+        console.error(e);
+      }
+    });
+  };
 
   const onDelete = () => {
     startTransition(async () => {
@@ -56,6 +71,16 @@ export function TacticCard({ tactic }: { tactic: TacticListItem }) {
           <Link href={`/tactic/${tactic.id}`}>
             <Pencil className="size-4" /> Ouvrir
           </Link>
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          disabled={pending}
+          title="Dupliquer"
+          onClick={onDuplicate}
+        >
+          <Copy className="size-4" />
         </Button>
         <AlertDialog>
           <AlertDialogTrigger asChild>

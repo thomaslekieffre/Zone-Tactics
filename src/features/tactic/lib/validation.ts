@@ -33,10 +33,33 @@ export const sequenceSchema = z.object({
   durationMs: z.number().int().positive().max(60_000).optional(),
 });
 
+const annotationStrokeSchema = z.object({
+  id: z.string().min(1),
+  points: z
+    .array(z.number())
+    .max(4000)
+    .refine((arr) => arr.length >= 4 && arr.length % 2 === 0, {
+      message: "points doit contenir au moins 2 points (x,y) normalisés",
+    }),
+});
+
+const annotationLabelSchema = z.object({
+  id: z.string().min(1),
+  x: norm,
+  y: norm,
+  text: z.string().max(200),
+});
+
+export const courtAnnotationsSchema = z.object({
+  strokes: z.array(annotationStrokeSchema).max(80),
+  labels: z.array(annotationLabelSchema).max(60),
+});
+
 export const tacticDataSchema = z.object({
   version: z.literal(1),
   initialSetup: initialSetupSchema,
   sequences: z.array(sequenceSchema).max(100),
+  annotations: courtAnnotationsSchema.optional(),
 });
 
 export const saveTacticSchema = z.object({

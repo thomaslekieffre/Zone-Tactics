@@ -14,7 +14,8 @@ import type {
 import { EMPTY_TACTIC, BASKET_NORM } from "../lib/types";
 import { clamp01 } from "../lib/geometry";
 
-export type Tool = "idle" | "arrow" | "pass" | "shoot";
+export type Tool = "idle" | "arrow" | "pass" | "shoot" | "annotate";
+export type AnnotateMode = "pen" | "label";
 
 type DraftPass = {
   fromPlayerId: string;
@@ -27,6 +28,8 @@ export type TacticStore = {
   data: TacticData;
 
   tool: Tool;
+  annotateMode: AnnotateMode;
+
   /** Player whose movement is currently being drawn (arrow start) */
   arrowFromPlayerId: string | null;
   /** Pending movement targets keyed by playerId, applied on validate */
@@ -39,6 +42,7 @@ export type TacticStore = {
 
   setName: (name: string) => void;
   setTool: (tool: Tool) => void;
+  setAnnotateMode: (mode: AnnotateMode) => void;
 
   hydrate: (input: { id: string | null; name: string; data: TacticData }) => void;
   reset: () => void;
@@ -65,6 +69,10 @@ export type TacticStore = {
   setSequenceComment: (sequenceId: string, comment: string) => void;
   setSequenceAudio: (sequenceId: string, path: string | null) => void;
 
+  addAnnotationStroke: (points: number[]) => void;
+  addAnnotationLabel: (x: number, y: number, text: string) => void;
+  removeAnnotation: (id: string) => void;
+
   setIsPlaying: (v: boolean) => void;
 };
 
@@ -82,6 +90,7 @@ export const useTacticStore = create<TacticStore>()(
       name: "",
       data: EMPTY_TACTIC,
       tool: "idle",
+      annotateMode: "pen",
       ...initialDraft,
       dirty: false,
       isPlaying: false,
@@ -90,10 +99,11 @@ export const useTacticStore = create<TacticStore>()(
       setTool: (tool) =>
         set((s) => ({
           tool,
-          // when changing tool, clear in-flight draft for that mode
           arrowFromPlayerId: tool === "arrow" ? s.arrowFromPlayerId : null,
           draftPass: tool === "pass" ? s.draftPass : null,
         })),
+
+      setAnnotateMode: (annotateMode) => set({ annotateMode }),
 
       hydrate: ({ id, name, data }) =>
         set({
@@ -102,6 +112,7 @@ export const useTacticStore = create<TacticStore>()(
           data,
           dirty: false,
           tool: "idle",
+          annotateMode: "pen",
           ...initialDraft,
         }),
 
@@ -112,6 +123,7 @@ export const useTacticStore = create<TacticStore>()(
           data: EMPTY_TACTIC,
           dirty: false,
           tool: "idle",
+          annotateMode: "pen",
           ...initialDraft,
         }),
 
@@ -263,6 +275,7 @@ export const useTacticStore = create<TacticStore>()(
       cancelDraft: () =>
         set({
           tool: "idle",
+          annotateMode: "pen",
           ...initialDraft,
         }),
 
@@ -298,6 +311,7 @@ export const useTacticStore = create<TacticStore>()(
           data: { ...s.data, sequences: [...s.data.sequences, seq] },
           dirty: true,
           tool: "idle",
+          annotateMode: "pen",
           ...initialDraft,
         });
         return null;
@@ -338,6 +352,63 @@ export const useTacticStore = create<TacticStore>()(
           },
           dirty: true,
         })),
+
+      addAnnotationStroke: (points) =>
+        set((s) => {
+          if (points.length < 4 || points.length % 2 !== 0) return s;
+          const prev = s.data.annotations ?? { strokes: [], labels: [] };
+          return {
+            data: {
+              ...s.data,
+              annotations: {
+                strokes: [...prev.strokes, { id: nanoid(8), points }],
+                labels: prev.labels,
+              },
+            },
+            dirty: true,
+          };
+        }),
+
+      addAnnotationLabel: (x, y, text) =>
+        set((s) => {
+          const t = text.trim().slice(0, 200);
+          if (!t) return s;
+          const prev = s.data.annotations ?? { strokes: [], labels: [] };
+          return {
+            data: {
+              ...s.data,
+              annotations: {
+                strokes: prev.strokes,
+                labels: [
+                  ...prev.labels,
+                  {
+                    id: nanoid(8),
+                    x: clamp01(x),
+                    y: clamp01(y),
+                    text: t,
+                  },
+                ],
+              },
+            },
+            dirty: true,
+          };
+        }),
+
+      removeAnnotation: (id) =>
+        set((s) => {
+          const prev = s.data.annotations;
+          if (!prev) return s;
+          return {
+            data: {
+              ...s.data,
+              annotations: {
+                strokes: prev.strokes.filter((st) => st.id !== id),
+                labels: prev.labels.filter((lb) => lb.id !== id),
+              },
+            },
+            dirty: true,
+          };
+        }),
 
       setIsPlaying: (v) => set({ isPlaying: v }),
     }),

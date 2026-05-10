@@ -32,10 +32,17 @@ export type Sequence = {
   durationMs?: number;
 };
 
+/** Traits et textes figés sur le parquet (hors séquences). */
+export type CourtAnnotations = {
+  strokes: { id: string; points: number[] }[];
+  labels: { id: string; x: number; y: number; text: string }[];
+};
+
 export type TacticData = {
   version: 1;
   initialSetup: InitialSetup;
   sequences: Sequence[];
+  annotations?: CourtAnnotations;
 };
 
 export const EMPTY_TACTIC: TacticData = {

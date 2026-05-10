@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { saveTacticSchema } from "@/features/tactic/lib/validation";
 import type { TacticData } from "@/features/tactic/lib/types";
 import { requireActiveSubscription } from "@/lib/subscription";
+import { hashSharePin, isValidSharePin } from "@/features/tactic/lib/sharePin";
 
 export async function loadTactic(id: string) {
   const supabase = await createClient();
@@ -69,7 +70,7 @@ export async function saveTactic(input: {
   return { id: data.id };
 }
 
-export async function createShare(tacticId: string) {
+export async function createShare(tacticId: string, pin?: string | null) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -86,12 +87,37 @@ export async function createShare(tacticId: string) {
   if (!tactic) throw new Error("Tactique introuvable");
 
   const slug = nanoid(10);
+  const trimmed = pin?.trim() ?? "";
+  const pin_hash =
+    trimmed.length > 0 ? hashSharePin(slug, trimmed) : null;
+  if (trimmed.length > 0 && !isValidSharePin(trimmed)) {
+    throw new Error("PIN : 4 à 6 chiffres");
+  }
+
   const { error } = await supabase.from("shares").insert({
     tactic_id: tacticId,
     slug,
     created_by: user.id,
+    pin_hash,
   });
   if (error) throw new Error(error.message);
 
-  return { slug };
+  return { slug, pinProtected: Boolean(pin_hash) };
+}
+
+export async function getSharesForTactic(tacticId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Unauthorized");
+
+  const { data, error } = await supabase
+    .from("shares")
+    .select("slug, view_count, pin_hash, created_at")
+    .eq("tactic_id", tacticId)
+    .order("created_at", { ascending: false });
+
+  if (error) throw new Error(error.message);
+  return data ?? [];
 }

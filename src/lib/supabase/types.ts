@@ -32,6 +32,8 @@ export type ShareRow = {
   tactic_id: string;
   slug: string;
   created_by: string;
+  pin_hash: string | null;
+  view_count: number;
   created_at: string;
 };
 
@@ -63,7 +65,12 @@ export type Database = {
       };
       shares: {
         Row: ShareRow;
-        Insert: { tactic_id: string; slug: string; created_by: string };
+        Insert: {
+          tactic_id: string;
+          slug: string;
+          created_by: string;
+          pin_hash?: string | null;
+        };
         Update: never;
         Relationships: [];
       };
@@ -90,7 +97,12 @@ export type Database = {
       };
     };
     Views: Record<string, never>;
-    Functions: Record<string, never>;
+    Functions: {
+      get_shared_tactic_data: {
+        Args: { p_slug: string; p_pin?: string | null };
+        Returns: Record<string, unknown> | null;
+      };
+    };
     Enums: Record<string, never>;
     CompositeTypes: Record<string, never>;
   };
