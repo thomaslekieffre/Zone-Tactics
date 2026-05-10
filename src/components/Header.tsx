@@ -1,65 +1,67 @@
-import Image from "next/image";
-import { SignInButton, UserButton, useUser } from "@clerk/nextjs";
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { Button } from "@/components/ui/button";
+import { UserMenu } from "@/components/UserMenu";
+import { BasketballIcon } from "@/components/BasketballIcon";
+import { displayUsername } from "@/lib/supabase/profileDisplay";
 
-export default function Header(): JSX.Element {
-  const { isSignedIn, user } = useUser();
+export async function Header() {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const { data: profile } = user
+    ? await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .maybeSingle()
+    : { data: null };
 
   return (
-    <div className="w-full bg-bleu">
-      <header className="bg-bfonce text-gray-300 w-10/12 mx-auto mt-8 rounded-xl">
-        <div className="flex items-center justify-between p-4">
-          <div className="flex items-center">
-            <Image
-              src="/img/logo.png"
-              alt="ZoneTactics Logo"
-              width={60}
-              height={60}
-            />
-            <span className="ml-3 text-white text-xl font-semibold">
-              ZoneTactics
-            </span>
-          </div>
+    <header className="sticky top-0 z-30 bg-background/95 border-b">
+      <div className="container flex h-14 items-center justify-between gap-4">
+        <Link href="/" className="flex items-center gap-2 font-semibold group">
+          <BasketballIcon className="size-7 transition-transform group-hover:rotate-180 duration-700" />
+          <span>Zone Tactics</span>
+        </Link>
 
-          <nav className="hidden md:flex space-x-8">
-            <a href="#features" className="hover:text-white">
-              Fonctionnalités
-            </a>
-            <Link href="/pricing" className="hover:text-white">
-              Prix
-            </Link>
-            <a href="#about" className="hover:text-white">
-              À propos
-            </a>
-          </nav>
+        <nav className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
+          <Link href="/#features" className="hover:text-foreground">
+            Fonctionnalités
+          </Link>
+          <Link href="/pricing" className="hover:text-foreground">
+            Tarifs
+          </Link>
+        </nav>
 
-          {isSignedIn ? (
-            <div className="hidden md:flex items-center space-x-4">
-              <Link
-                href="/"
-                className="px-6 py-2 text-black capitalize bg-white rounded-full hover:bg-gray-100"
-              >
-                {user.username}
-              </Link>
-              <UserButton
-                afterSignOutUrl="/"
-                appearance={{
-                  elements: {
-                    avatarBox: "w-10 h-10",
-                    userButtonAvatarBox: "w-10 h-10",
-                  },
-                }}
+        <div className="flex items-center gap-2">
+          {user ? (
+            <>
+              <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+                <Link href="/library">Bibliothèque</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/tactic/new">Nouvelle tactique</Link>
+              </Button>
+              <UserMenu
+                username={displayUsername(user, profile)}
+                email={user.email ?? undefined}
               />
-            </div>
+            </>
           ) : (
-            <SignInButton mode="modal">
-              <button className="hidden md:inline-block px-6 py-2 text-black bg-white rounded-full hover:bg-gray-100">
-                Accéder à l&apos;app
-              </button>
-            </SignInButton>
+            <>
+              <Button asChild variant="ghost" size="sm">
+                <Link href="/login">Connexion</Link>
+              </Button>
+              <Button asChild size="sm">
+                <Link href="/signup">S'inscrire</Link>
+              </Button>
+            </>
           )}
         </div>
-      </header>
-    </div>
+      </div>
+    </header>
   );
 }

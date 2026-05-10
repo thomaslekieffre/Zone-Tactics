@@ -1,8 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  env: {
-    STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
+  images: {
+    remotePatterns: [
+      { protocol: "https", hostname: "*.supabase.co" },
+    ],
+  },
+  experimental: {
+    optimizePackageImports: ["lucide-react"],
   },
 };
 

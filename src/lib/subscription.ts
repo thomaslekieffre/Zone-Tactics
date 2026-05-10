@@ -1,48 +1,43 @@
-import { list } from "@vercel/blob";
+import { createClient } from "@/lib/supabase/server";
+import type { SubscriptionStatus } from "@/lib/supabase/types";
+
+const ACTIVE_STATUSES: SubscriptionStatus[] = ["active", "trialing"];
+
+/** Dev / preview : tout le monde est considéré comme abonné actif (pas de Stripe). */
+export function isPaidGateDisabled(): boolean {
+  const v = process.env.DISABLE_PAID_GATE;
+  return v === "1" || v === "true";
+}
 
 export async function getSubscriptionStatus(
-  userId: string
-): Promise<"active" | "inactive"> {
-  try {
-    console.log(`Début de la vérification pour l'utilisateur: ${userId}`);
-    const { blobs } = await list();
-
-    console.log(
-      "Tous les blobs trouvés:",
-      blobs.map((b) => b.pathname)
-    );
-
-    const userBlob = blobs.find((blob) =>
-      blob.pathname.startsWith(`subscriptions/${userId}`)
-    );
-
-    if (!userBlob) {
-      console.log(`Aucun blob trouvé pour l'utilisateur ${userId}`);
-      return "inactive";
-    }
-
-    console.log(`Blob trouvé pour l'utilisateur ${userId}:`, userBlob);
-
-    const response = await fetch(userBlob.url);
-    if (!response.ok) {
-      throw new Error(`Erreur HTTP! statut: ${response.status}`);
-    }
-
-    const subscriptionData = await response.json();
-    console.log(`Données d'abonnement pour ${userId}:`, subscriptionData);
-
-    if (subscriptionData.status === "active") {
-      console.log(`Abonnement actif pour l'utilisateur ${userId}`);
-      return "active";
-    } else {
-      console.log(`Abonnement inactif pour l'utilisateur ${userId}`);
-      return "inactive";
-    }
-  } catch (error) {
-    console.error(
-      `Erreur lors de la vérification de l'abonnement pour l'utilisateur ${userId}:`,
-      error
-    );
-    return "inactive";
+  userId?: string,
+): Promise<{ status: SubscriptionStatus; isActive: boolean }> {
+  if (isPaidGateDisabled()) {
+    return { status: "active", isActive: true };
   }
+
+  const supabase = await createClient();
+  let id = userId;
+  if (!id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    id = user?.id;
+  }
+  if (!id) return { status: "inactive", isActive: false };
+
+  const { data } = await supabase
+    .from("subscriptions")
+    .select("status")
+    .eq("user_id", id)
+    .maybeSingle();
+
+  const status = (data?.status as SubscriptionStatus | undefined) ?? "inactive";
+  return { status, isActive: ACTIVE_STATUSES.includes(status) };
+}
+
+export async function requireActiveSubscription() {
+  if (isPaidGateDisabled()) return true;
+  const { isActive } = await getSubscriptionStatus();
+  return isActive;
 }
