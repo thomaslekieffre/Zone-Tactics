@@ -1,11 +1,10 @@
 name: Supabase keepalive
 
-# Empêche le projet Supabase free de se mettre en pause :
-# on tape /auth/v1/health (200 sans auth) + un select 1 ligne sur `profiles`,
-# qui constitue une vraie requête SQL et compte comme activité projet.
+# Empeche le projet Supabase free de se mettre en pause :
+# une requete par jour suffit a compter comme activite.
 on:
   schedule:
-    - cron: "17 6 * * *" # tous les jours à 06:17 UTC
+    - cron: "17 6 * * *" # tous les jours a 06:17 UTC
   workflow_dispatch:
 
 concurrency:
@@ -28,19 +27,40 @@ jobs:
             exit 1
           fi
 
-          echo "→ /auth/v1/health"
-          curl -fsS "${SUPABASE_URL}/auth/v1/health" -o /dev/null
-          echo "  ok"
+          # Strip trailing slash si present dans le secret
+          URL="${SUPABASE_URL%/}"
 
-          echo "→ /rest/v1/profiles?select=id&limit=1"
-          status=$(curl -sS -o /dev/null -w "%{http_code}" \
-            -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
-            -H "Authorization: Bearer ${SUPABASE_PUBLISHABLE_KEY}" \
-            -H "Accept: application/json" \
-            "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" || echo "000")
-          echo "  http=${status}"
-          if [ "${status}" != "200" ] && [ "${status}" != "206" ]; then
-            echo "::warning::REST ping a renvoye ${status} (le health suffit pour compter comme activite)"
+          fingerprint="${SUPABASE_PUBLISHABLE_KEY:0:8}...${SUPABASE_PUBLISHABLE_KEY: -4}"
+          echo "URL=${URL}"
+          echo "key fingerprint=${fingerprint} (len=${#SUPABASE_PUBLISHABLE_KEY})"
+
+          ping() {
+            local label="$1"
+            local path="$2"
+            echo "-> ${label} (${path})"
+            local status
+            status=$(curl -sS -o /tmp/body.txt -w "%{http_code}" \
+              -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
+              -H "Authorization: Bearer ${SUPABASE_PUBLISHABLE_KEY}" \
+              -H "Accept: application/json" \
+              "${URL}${path}" || echo "000")
+            echo "   http=${status}"
+            if [ "${status}" != "200" ] && [ "${status}" != "206" ]; then
+              echo "   body:"
+              head -c 500 /tmp/body.txt || true
+              echo ""
+              return 1
+            fi
+            return 0
+          }
+
+          ok=0
+          if ping "auth health" "/auth/v1/health"; then ok=1; fi
+          if ping "rest profiles" "/rest/v1/profiles?select=id&limit=1"; then ok=1; fi
+
+          if [ "${ok}" -eq 0 ]; then
+            echo "::error::aucun endpoint n'a repondu 200 - secrets ou URL probablement faux"
+            exit 1
           fi
 
           echo "OK ping $(date -u +%FT%TZ)"
