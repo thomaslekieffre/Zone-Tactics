@@ -20,8 +20,10 @@ jobs:
           node-version: "20"
           cache: npm
 
+      # `npm install` plutot que `npm ci` car le lockfile est genere sous
+      # Windows et n'inclut pas les optionalDependencies Linux (@emnapi/*).
       - name: Install
-        run: npm ci
+        run: npm install --no-audit --no-fund --prefer-offline
 
       - name: Lint
         run: npm run lint
