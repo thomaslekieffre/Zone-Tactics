@@ -1,7 +1,8 @@
 name: Supabase keepalive
 
 # Empêche le projet Supabase free de se mettre en pause :
-# un simple GET /rest/v1/ chaque jour suffit à compter comme activité.
+# on tape /auth/v1/health (200 sans auth) + un select 1 ligne sur `profiles`,
+# qui constitue une vraie requête SQL et compte comme activité projet.
 on:
   schedule:
     - cron: "17 6 * * *" # tous les jours à 06:17 UTC
@@ -16,7 +17,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Ping REST endpoint
+      - name: Ping Supabase
         env:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_PUBLISHABLE_KEY: ${{ secrets.SUPABASE_PUBLISHABLE_KEY }}
@@ -26,9 +27,20 @@ jobs:
             echo "::error::secrets SUPABASE_URL et SUPABASE_PUBLISHABLE_KEY manquants"
             exit 1
           fi
-          # On tape un endpoint léger ; -f fait échouer en cas de 4xx/5xx, -sS reste silencieux mais affiche les erreurs.
-          curl -fsS \
+
+          echo "→ /auth/v1/health"
+          curl -fsS "${SUPABASE_URL}/auth/v1/health" -o /dev/null
+          echo "  ok"
+
+          echo "→ /rest/v1/profiles?select=id&limit=1"
+          status=$(curl -sS -o /dev/null -w "%{http_code}" \
             -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
             -H "Authorization: Bearer ${SUPABASE_PUBLISHABLE_KEY}" \
-            "${SUPABASE_URL}/rest/v1/?select=*" -o /dev/null
+            -H "Accept: application/json" \
+            "${SUPABASE_URL}/rest/v1/profiles?select=id&limit=1" || echo "000")
+          echo "  http=${status}"
+          if [ "${status}" != "200" ] && [ "${status}" != "206" ]; then
+            echo "::warning::REST ping a renvoye ${status} (le health suffit pour compter comme activite)"
+          fi
+
           echo "OK ping $(date -u +%FT%TZ)"
