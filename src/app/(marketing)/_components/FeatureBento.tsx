@@ -20,7 +20,7 @@ import {
 export function FeatureBento() {
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 auto-rows-[minmax(220px,auto)] gap-4 lg:gap-5">
-      <Cell index="01" cls="lg:col-span-2 lg:row-span-2">
+      <FeatureBentoCell index="01" cls="lg:col-span-2 lg:row-span-2">
         <div className="flex flex-col h-full gap-6">
           <div>
             <Smartphone className="size-7 text-primary" />
@@ -54,9 +54,9 @@ export function FeatureBento() {
             <DeviceMock />
           </div>
         </div>
-      </Cell>
+      </FeatureBentoCell>
 
-      <Cell index="02" accent="blue-red">
+      <FeatureBentoCell index="02" accent="blue-red">
         <Users className="size-7 text-primary" />
         <h3 className="mt-5 text-xl font-bold">Attaque vs Défense</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
@@ -65,9 +65,9 @@ export function FeatureBento() {
           Le ballon s&apos;attache tout seul.
         </p>
         <TeamDots />
-      </Cell>
+      </FeatureBentoCell>
 
-      <Cell index="03">
+      <FeatureBentoCell index="03">
         <Mic className="size-7 text-primary" />
         <h3 className="mt-5 text-xl font-bold">Coaching vocal</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
@@ -75,27 +75,27 @@ export function FeatureBento() {
           votre voix.
         </p>
         <Waveform />
-      </Cell>
+      </FeatureBentoCell>
 
-      <Cell index="04">
+      <FeatureBentoCell index="04">
         <PlayCircle className="size-7 text-primary" />
         <h3 className="mt-5 text-xl font-bold">Animations fluides</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
           Fini les flèches statiques. Play, et le système prend vie.
         </p>
         <PlaybackTrail />
-      </Cell>
+      </FeatureBentoCell>
 
-      <Cell index="05">
+      <FeatureBentoCell index="05">
         <Sparkles className="size-7 text-primary" />
         <h3 className="mt-5 text-xl font-bold">Zéro prise de tête</h3>
         <p className="mt-2 text-sm text-muted-foreground leading-relaxed">
           Trois outils. C&apos;est tout.
         </p>
         <ToolChips />
-      </Cell>
+      </FeatureBentoCell>
 
-      <Cell index="06" cls="lg:col-span-2">
+      <FeatureBentoCell index="06" cls="lg:col-span-2">
         <Share2 className="size-7 text-primary" />
         <h3 className="mt-5 text-xl sm:text-2xl font-bold">
           Partage instantané, sans compte
@@ -105,7 +105,7 @@ export function FeatureBento() {
           en deux clics, pas besoin de s&apos;inscrire.
         </p>
         <ShareIllu />
-      </Cell>
+      </FeatureBentoCell>
     </div>
   );
 }
@@ -113,7 +113,7 @@ export function FeatureBento() {
 /* ---------------------------------------------------------- */
 /* Wrapper card avec hover tilt léger + numéro fantôme        */
 /* ---------------------------------------------------------- */
-function Cell({
+export function FeatureBentoCell({
   children,
   index,
   cls = "",

@@ -10,8 +10,6 @@ import {
 import { FeatureBento } from "./_components/FeatureBento";
 import { LandingDemo } from "./_components/LandingDemo";
 import { LandingFeatureHighlights } from "./_components/LandingFeatureHighlights";
-import { LandingTemplates } from "./_components/LandingTemplates";
-
 export const metadata: Metadata = {
   title: "Tactiques basketball animées — tableau noir coach mobile",
   description:
@@ -85,11 +83,6 @@ export default function HomePage() {
                   <PlayCircle className="ml-2 size-4 transition-transform group-hover:scale-110" />
                 </Link>
               </Button>
-              <Button asChild size="lg" variant="ghost" className="h-12 px-6 text-base w-full sm:w-auto rounded-full">
-                <Link href="#templates">
-                  Voir les modèles
-                </Link>
-              </Button>
             </div>
           </FadeUp>
         </div>
@@ -124,12 +117,9 @@ export default function HomePage() {
           </FadeUp>
 
           <FeatureBento />
+          <LandingFeatureHighlights />
         </div>
       </section>
-
-      <LandingFeatureHighlights />
-
-      <LandingTemplates />
 
       {/* CTA */}
       <section className="py-24 relative overflow-hidden">
