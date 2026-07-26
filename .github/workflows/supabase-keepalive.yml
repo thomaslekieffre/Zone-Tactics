@@ -1,15 +1,24 @@
 name: Supabase keepalive
 
-# Empeche le projet Supabase free de se mettre en pause :
-# une requete par jour suffit a compter comme activite.
+# Empêche le projet Supabase free de se mettre en pause (7 jours d'inactivité).
+# Une requête API/DB réelle suffit ; le dashboard ne compte PAS.
+#
+# Attention GitHub : les workflows schedule sont désactivés après 60 jours
+# SANS activité sur le repo (push/PR). Les runs du cron ne comptent pas.
+# Contre-mesure : cron Vercel sur /api/keepalive (voir vercel.json).
 on:
   schedule:
-    - cron: "17 6 * * *" # tous les jours a 06:17 UTC
+    # 2×/jour : GitHub peut retarder/skipper un cron, on se couvre
+    - cron: "17 6 * * *" # 06:17 UTC
+    - cron: "41 18 * * *" # 18:41 UTC
   workflow_dispatch:
 
 concurrency:
   group: supabase-keepalive
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   ping:
@@ -40,6 +49,7 @@ jobs:
             echo "-> ${label} (${path})"
             local status
             status=$(curl -sS -o /tmp/body.txt -w "%{http_code}" \
+              --max-time 30 \
               -H "apikey: ${SUPABASE_PUBLISHABLE_KEY}" \
               -H "Authorization: Bearer ${SUPABASE_PUBLISHABLE_KEY}" \
               -H "Accept: application/json" \
@@ -56,6 +66,7 @@ jobs:
 
           ok=0
           if ping "auth health" "/auth/v1/health"; then ok=1; fi
+          # Requête REST = vraie activité DB (c'est ça qui empêche la pause)
           if ping "rest profiles" "/rest/v1/profiles?select=id&limit=1"; then ok=1; fi
 
           if [ "${ok}" -eq 0 ]; then

@@ -15,6 +15,20 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
 NEXT_PUBLIC_STRIPE_PRICE_ID=price_...
 ```
 
+## Anti-pause (free tier)
+
+Supabase pause les projets free après ~7 jours sans activité API/DB (le dashboard ne compte pas).
+
+Déjà branché dans ce repo :
+
+1. **GitHub Actions** — `.github/workflows/supabase-keepalive.yml`  
+   Secrets : `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`  
+   Relancer manuellement : Actions → *Supabase keepalive* → *Run workflow*  
+   ⚠️ Désactivé auto après 60j sans activité git sur le repo.
+
+2. **Cron Vercel** — `GET /api/keepalive` via `vercel.json`  
+   Env : `CRON_SECRET` (+ les `NEXT_PUBLIC_SUPABASE_*` déjà en prod)
+
 ## Appliquer la migration
 
 Option A — via Supabase CLI (recommandé) :
