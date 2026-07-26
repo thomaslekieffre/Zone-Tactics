@@ -140,6 +140,10 @@ Toutes les positions (joueurs, ballon, mouvements) sont stockées en `[0, 1]` pl
 2. **Premier clone** : `cp .env.example .env` puis remplir localement.
 3. **CI** : `.github/workflows/ci.yml` exécute sur chaque push / PR (`main` ou `master`) : `npm ci`, lint, `type-check`, tests Vitest, `next build` avec des variables factices. Les *warnings* ESLint ne font pas échouer le workflow.
 4. **Prod** : variables réelles uniquement dans l’hébergeur (Vercel, etc.), pas dans git.
+5. **Anti-pause Supabase (free)** : le free tier pause après ~7j sans requête API/DB. Deux filets :
+   - GitHub Actions `.github/workflows/supabase-keepalive.yml` (2×/jour) — secrets repo `SUPABASE_URL` + `SUPABASE_PUBLISHABLE_KEY`. ⚠️ GitHub **désactive** les schedules après **60j sans push/PR** sur le repo (les runs du cron ne comptent pas).
+   - Cron Vercel `vercel.json` → `GET /api/keepalive` (1×/jour). Définis `CRON_SECRET` en prod ; Vercel l’envoie en `Authorization: Bearer …`.
+   - Alternative ultime : passer en Pro (pas de pause).
 
 ## Hors scope (roadmap)
 
